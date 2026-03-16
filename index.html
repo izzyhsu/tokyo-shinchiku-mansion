@@ -8,14 +8,17 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --red:    #e8351a;
-      --red-dk: #c52c14;
-      --grey:   #6b7280;
-      --bg:     #f5f5f5;
-      --white:  #ffffff;
-      --border: #e5e7eb;
-      --shadow: 0 1px 4px rgba(0,0,0,.10);
-      --radius: 10px;
+      --red:     #e8351a;
+      --red-dk:  #c52c14;
+      --blue:    #4f46e5;
+      --blue-dk: #4338ca;
+      --blue-bg: #eef2ff;
+      --grey:    #6b7280;
+      --bg:      #f5f5f5;
+      --white:   #ffffff;
+      --border:  #e5e7eb;
+      --shadow:  0 1px 4px rgba(0,0,0,.10);
+      --radius:  10px;
     }
 
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -64,7 +67,7 @@
       box-shadow: var(--shadow); display: none;
     }
 
-    /* ── Main content ────────────────────────────────────────────────────────── */
+    /* ── Main ────────────────────────────────────────────────────────────────── */
     main { max-width: 1200px; margin: 0 auto; padding: 20px 20px 60px; }
 
     #status-bar {
@@ -80,7 +83,6 @@
     }
     #status-bar button:hover { border-color: var(--red); color: var(--red); }
 
-    /* loading / error */
     #loading-state, #error-state { text-align: center; padding: 60px 20px; color: var(--grey); }
     #error-state { color: var(--red); }
     .spinner {
@@ -91,8 +93,8 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── Filter bar ──────────────────────────────────────────────────────────── */
-    #filter-bar { margin-bottom: 20px; }
-    #pref-filter { display: flex; flex-wrap: wrap; gap: 8px; }
+    #filter-bar { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
+    #pref-filter { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
     .pref-pill {
       padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
@@ -104,6 +106,11 @@
     .pref-pill.active { background: var(--red); border-color: var(--red); color: #fff; }
     .pref-pill.active .pill-count { color: rgba(255,255,255,.8); }
     .pill-count { font-size: 11px; color: #9ca3af; }
+
+    /* Blue (中古) pills */
+    .type-pill-chuko:hover { border-color: var(--blue); color: var(--blue); }
+    .type-pill-chuko.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
     .filter-divider { width: 1px; background: var(--border); align-self: stretch; margin: 2px 0; }
 
     /* ── Prefecture sections ─────────────────────────────────────────────────── */
@@ -116,7 +123,7 @@
     .pref-name  { font-size: 16px; font-weight: 800; color: #111; }
     .pref-count { font-size: 13px; color: var(--grey); }
 
-    /* ── Table layout ────────────────────────────────────────────────────────── */
+    /* ── Table ───────────────────────────────────────────────────────────────── */
     .table-wrapper {
       width: 100%; overflow-x: auto;
       border-radius: var(--radius);
@@ -124,37 +131,36 @@
       background: var(--white);
       box-shadow: var(--shadow);
     }
-    .property-table {
-      width: 100%; border-collapse: collapse; font-size: 13px;
-    }
+    .property-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .property-table thead th {
       background: #f8f9fa;
       border-bottom: 2px solid var(--border);
-      padding: 9px 12px;
-      text-align: left; font-size: 11px; font-weight: 600;
-      color: var(--grey); text-transform: uppercase;
-      letter-spacing: .5px; white-space: nowrap;
+      padding: 9px 12px; text-align: left;
+      font-size: 11px; font-weight: 600; color: var(--grey);
+      text-transform: uppercase; letter-spacing: .5px; white-space: nowrap;
       user-select: none;
     }
-    /* Sortable column headers */
-    .th-sort {
-      cursor: pointer; transition: color .12s;
-    }
+    .th-sort { cursor: pointer; transition: color .12s; }
     .th-sort:hover { color: #374151; }
     .th-sort.sorted { color: var(--red); }
     .sort-indicator { margin-left: 4px; font-size: 10px; opacity: .8; }
 
-    .property-table tbody tr {
-      border-bottom: 1px solid #f3f4f6;
-      transition: background .12s;
-    }
+    .property-table tbody tr { border-bottom: 1px solid #f3f4f6; transition: background .12s; }
     .property-table tbody tr:last-child { border-bottom: none; }
-    .property-table tbody tr:hover { background: #fef9f9; }
-    .property-table tbody tr.row-fav { background: #fff8f8; }
-    .property-table tbody tr.row-fav td.col-pin { box-shadow: inset 3px 0 0 var(--red); }
+    .property-table tbody tr:hover { background: #fafafa; }
+
+    /* 新築 row accent */
+    .property-table tbody tr.row-new td.col-pin   { box-shadow: inset 3px 0 0 var(--red); }
+    /* 中古 row */
+    .property-table tbody tr.row-chuko            { background: #fafbff; }
+    .property-table tbody tr.row-chuko:hover       { background: #f1f3ff; }
+    .property-table tbody tr.row-chuko td.col-pin  { box-shadow: inset 3px 0 0 var(--blue); }
+    /* Favorite overrides type accent */
+    .property-table tbody tr.row-fav td.col-pin    { box-shadow: inset 3px 0 0 #f59e0b !important; }
+
     .property-table td { padding: 10px 12px; vertical-align: middle; }
 
-    /* Column widths */
+    /* Columns */
     .col-pin     { width: 40px; padding: 8px 6px; text-align: center; }
     .col-title   { min-width: 220px; }
     .col-station { white-space: nowrap; min-width: 90px; }
@@ -166,11 +172,20 @@
     .row-title { font-weight: 600; font-size: 13px; color: #111; line-height: 1.4; }
     .row-title a { color: inherit; text-decoration: none; }
     .row-title a:hover { color: var(--red); }
-    .row-addr { font-size: 11px; color: #9ca3af; margin-top: 2px; line-height: 1.4; }
+    .row-chuko .row-title a:hover { color: var(--blue); }
+    .row-sub { font-size: 11px; color: #9ca3af; margin-top: 2px; line-height: 1.5; }
+
+    /* Type badges */
+    .type-badge {
+      display: inline-block; font-size: 9px; font-weight: 700;
+      padding: 1px 5px; border-radius: 3px; vertical-align: middle; margin-right: 4px;
+    }
+    .type-badge.new   { background: var(--red);  color: #fff; }
+    .type-badge.chuko { background: var(--blue); color: #fff; }
 
     .new-badge {
-      display: inline-block;
-      background: var(--red); color: #fff; font-size: 9px; font-weight: 700;
+      display: inline-block; background: #16a34a; color: #fff;
+      font-size: 9px; font-weight: 700;
       padding: 1px 5px; border-radius: 3px; vertical-align: middle; margin-right: 3px;
     }
 
@@ -184,6 +199,8 @@
     }
     .pin-btn:hover { background: #fee2e2; }
     .pin-btn.no-geo { opacity: .2; cursor: default; pointer-events: none; }
+    .row-chuko .pin-btn { background: var(--blue-bg); }
+    .row-chuko .pin-btn:hover { background: #e0e7ff; }
 
     /* Action buttons */
     .btn-fav {
@@ -199,6 +216,8 @@
       transition: background .15s; vertical-align: middle;
     }
     .btn-detail:hover { background: var(--red-dk); }
+    .row-chuko .btn-detail { background: var(--blue); }
+    .row-chuko .btn-detail:hover { background: var(--blue-dk); }
 
     /* empty state */
     #empty-state { display: none; text-align: center; padding: 60px 20px; color: var(--grey); }
@@ -241,7 +260,7 @@
     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
     <polyline points="9 22 9 12 15 12 15 22"/>
   </svg>
-  <h1>Tokyo Shinchiku Mansion <span style="font-size:11px;font-weight:400;opacity:.7;letter-spacing:.3px">v0.0.3</span></h1>
+  <h1>Tokyo Shinchiku Mansion <span style="font-size:11px;font-weight:400;opacity:.7;letter-spacing:.3px">v0.0.4</span></h1>
   <span class="header-badge" id="header-count">読込中…</span>
   <button class="btn-settings" onclick="openSettings()" title="API設定">⚙️</button>
 </header>
@@ -276,7 +295,10 @@
   <div id="map"></div>
   <div id="map-legend">
     <div class="legend-item">
-      <span class="legend-dot" style="background:#e8351a"></span>物件
+      <span class="legend-dot" style="background:#e8351a"></span>新築
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot" style="background:#4f46e5"></span>中古
     </div>
     <div class="legend-item">
       <span class="legend-dot" style="background:#f59e0b"></span>お気に入り
@@ -312,8 +334,8 @@
 
   <div id="property-grid"></div>
   <div id="empty-state">
-    <div class="icon">🤍</div>
-    <p>まだお気に入りがありません。<br>❤️ を押して追加してください。</p>
+    <div class="icon">📭</div>
+    <p>表示できる物件がありません。</p>
   </div>
 </main>
 
@@ -329,15 +351,36 @@ const API_BASE = (() => {
   return (param || effective || 'https://tokyo-shinchiku-mansion.onrender.com').replace(/\/$/, '');
 })();
 
+// ── 中古 property data (from CSV import) ────────────────────────────────────────
+// Source: 東京都マンション Sheet1.csv  — second-hand (中古) properties
+const CHUKO_DATA = [
+  { title: 'プラウドシティ赤羽',                      link: 'https://suumo.jp/ms/chuko/tokyo/sc_kita/nc_20402221/',    district: '北区',  station: '赤羽',   walkMin: 4,  area: 73.53, floorInfo: '23/24', age: 15, direction: '南',  price: '13,280' },
+  { title: 'シティタワー赤羽テラス',                   link: 'https://suumo.jp/ms/chuko/tokyo/sc_kita/nc_79189561/',    district: '北区',  station: '赤羽',   walkMin: 10, area: 71.79, floorInfo: '11/23', age: 14, direction: '北東', price: '9,280'  },
+  { title: 'ザ・パークハウス赤羽 ウエストウイング',     link: 'https://suumo.jp/ms/chuko/tokyo/sc_kita/nc_20387571/',    district: '北区',  station: '赤羽',   walkMin: 4,  area: 70.12, floorInfo: '8/15',  age: 14, direction: '南',  price: '11,800' },
+  { title: 'アトラスタワー北千住 (24F)',               link: 'https://suumo.jp/ms/chuko/tokyo/sc_adachi/nc_78987334/', district: '足立区', station: '北千住', walkMin: 3,  area: 83.23, floorInfo: '24/26', age: 22, direction: '南',  price: '14,500' },
+  { title: 'アトラスタワー北千住 (16F)',               link: 'https://suumo.jp/ms/chuko/tokyo/sc_adachi/nc_20427500/', district: '足立区', station: '北千住', walkMin: 3,  area: 76.13, floorInfo: '16/26', age: 22, direction: '西',  price: '13,800' },
+  { title: 'アトラスタワー北千住 (13F)',               link: 'https://suumo.jp/ms/chuko/tokyo/sc_adachi/nc_79071360/', district: '足立区', station: '北千住', walkMin: 3,  area: 70.54, floorInfo: '13/26', age: 22, direction: '西',  price: '11,880' },
+  { title: 'アトラス練馬レジデンス',                   link: 'https://suumo.jp/ms/chuko/tokyo/sc_nerima/nc_79074538/', district: '練馬区', station: '練馬',   walkMin: 6,  area: 73.45, floorInfo: '13/14', age: 5,  direction: '南',  price: '12,800' },
+].map((p, i) => ({
+  ...p,
+  id:         `chuko-${i}`,
+  type:       'chuko',
+  pubDate:    null,
+  totalUnits: null,
+  line:       null,
+  busMin:     null,
+}));
+
 // ── State ──────────────────────────────────────────────────────────────────────
 let allProperties  = [];
 let favorites      = new Set(JSON.parse(localStorage.getItem('favorites') || '[]'));
 let showFavOnly    = false;
-let sortKey        = 'date';   // default: newest first
-let sortDir        = -1;       // -1 = desc
+let sortKey        = 'date';
+let sortDir        = -1;
 
 const prefectureMap       = new Map();
 const selectedPrefectures = new Set();
+const selectedTypes       = new Set();   // empty = show all; values: 'new' | 'chuko'
 
 // ── Google Maps globals ────────────────────────────────────────────────────────
 let gmap, infoWindow;
@@ -358,8 +401,11 @@ function makeIcon(fill, scale = 1) {
     anchor:     new google.maps.Point(w / 2, h),
   };
 }
+
 function getIcon(id) {
-  return favorites.has(id) ? makeIcon('#f59e0b') : makeIcon('#e8351a');
+  if (favorites.has(id)) return makeIcon('#f59e0b');
+  const entry = markerMap[id];
+  return (entry?.property?.type === 'chuko') ? makeIcon('#4f46e5') : makeIcon('#e8351a');
 }
 
 // ── Map init ───────────────────────────────────────────────────────────────────
@@ -369,21 +415,44 @@ window.initMap = function () {
     mapTypeControl: false, streetViewControl: false, fullscreenControl: true,
     zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
   });
-  infoWindow = new google.maps.InfoWindow({ maxWidth: 280 });
+  infoWindow = new google.maps.InfoWindow({ maxWidth: 300 });
   loadProperties();
 };
 
 // ── InfoWindow content ─────────────────────────────────────────────────────────
 function buildInfoContent(p, geo) {
-  const walk = p.walkMin ? `徒歩${p.walkMin}分` : (p.busMin ? `バス${p.busMin}分` : '');
-  const meta = [p.station ? `${p.station}駅` : '', walk, p.totalUnits ? `${p.totalUnits}戸` : '']
-               .filter(Boolean).join(' · ');
-  const isFav = favorites.has(p.id);
+  const isChuko = p.type === 'chuko';
+  const accent  = isChuko ? '#4f46e5' : '#e8351a';
+  const walk    = p.walkMin ? `徒歩${p.walkMin}分` : (p.busMin ? `バス${p.busMin}分` : '');
+  const isFav   = favorites.has(p.id);
+
+  let metaParts = [];
+  if (p.station) metaParts.push(`${p.station}駅`);
+  if (walk)      metaParts.push(walk);
+  if (!isChuko && p.totalUnits) metaParts.push(`${p.totalUnits}戸`);
+
+  let extraHTML = '';
+  if (isChuko) {
+    const cparts = [];
+    if (p.area)      cparts.push(`${p.area}㎡`);
+    if (p.direction) cparts.push(p.direction);
+    if (p.floorInfo) cparts.push(`${p.floorInfo}階`);
+    if (p.age)       cparts.push(`築${p.age}年`);
+    if (cparts.length) extraHTML += `<div style="font-size:11px;color:#9ca3af;margin-bottom:4px">${cparts.join(' · ')}</div>`;
+    if (p.price)     extraHTML += `<div style="font-size:16px;font-weight:800;color:${accent};margin-bottom:6px">${p.price}万円</div>`;
+  }
+
+  const addrLine = geo.resolvedAddress || geo.address;
+
   return `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-width:210px;max-width:260px">
-      <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:5px;line-height:1.45">${esc(p.title)}</div>
-      ${meta ? `<div style="font-size:12px;color:#6b7280;margin-bottom:5px;line-height:1.6">${esc(meta)}</div>` : ''}
-      ${(geo.resolvedAddress || geo.address) ? `<div style="font-size:11px;color:#9ca3af;margin-bottom:10px;line-height:1.4">📍 ${esc(geo.resolvedAddress || geo.address)}</div>` : ''}
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-width:210px;max-width:280px">
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px">
+        <span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:${accent};color:#fff;flex-shrink:0">${isChuko ? '中古' : '新築'}</span>
+        <div style="font-size:13px;font-weight:700;color:#111;line-height:1.4">${esc(p.title)}</div>
+      </div>
+      ${metaParts.length ? `<div style="font-size:12px;color:#6b7280;margin-bottom:5px">${esc(metaParts.join(' · '))}</div>` : ''}
+      ${extraHTML}
+      ${addrLine ? `<div style="font-size:11px;color:#9ca3af;margin-bottom:10px;line-height:1.4">📍 ${esc(addrLine)}</div>` : ''}
       <div style="display:flex;gap:8px;align-items:center">
         <button onclick="toggleFavorite(${JSON.stringify(p.id)})"
           style="flex-shrink:0;background:none;border:1px solid #e5e7eb;border-radius:7px;
@@ -393,7 +462,7 @@ function buildInfoContent(p, geo) {
         <a href="${p.link}" target="_blank"
            style="flex:1;display:block;text-align:center;padding:8px 12px;border-radius:7px;
                   font-size:13px;font-weight:600;text-decoration:none;
-                  background:#e8351a;color:#ffffff;letter-spacing:.2px">
+                  background:${accent};color:#ffffff;letter-spacing:.2px">
           物件詳細を見る ↗
         </a>
       </div>
@@ -465,7 +534,8 @@ async function geocodeAll(properties) {
 
         const addrEl = document.getElementById(`addr-${safeId(p.id)}`);
         if (addrEl) {
-          addrEl.textContent = geo.resolvedAddress || geo.address || `${p.station}駅付近`;
+          addrEl.textContent = (addrEl.dataset.base ? addrEl.dataset.base + ' · ' : '')
+            + (geo.resolvedAddress || geo.address || `${p.station}駅付近`);
           addrEl.style.display = '';
         }
         const pinBtn = document.getElementById(`pin-${safeId(p.id)}`);
@@ -529,15 +599,13 @@ function sortProps(props) {
         va = a.pubDate ? new Date(a.pubDate).getTime() : 0;
         vb = b.pubDate ? new Date(b.pubDate).getTime() : 0;
         return sortDir * (va - vb);
-      default:
-        return 0;
+      default: return 0;
     }
   });
 }
 
-// Build a sortable <th> element
 function thSort(key, label, extraClass = '') {
-  const active   = sortKey === key;
+  const active    = sortKey === key;
   const indicator = active ? (sortDir === 1 ? '↑' : '↓') : '';
   const th = document.createElement('th');
   th.className = `th-sort${active ? ' sorted' : ''}${extraClass ? ' ' + extraClass : ''}`;
@@ -571,29 +639,51 @@ function renderPrefectureFilter() {
     if (pref) groups.set(pref, (groups.get(pref) || 0) + 1);
   });
 
+  const newCount   = allProperties.filter(p => p.type !== 'chuko').length;
+  const chukoCount = allProperties.filter(p => p.type === 'chuko').length;
+
   filterBar.style.display = 'block';
   bar.innerHTML = '';
 
-  // ❤️ Favorites pill
+  // ❤️ Favorites
   const favBtn = document.createElement('button');
   favBtn.className = 'pref-pill' + (showFavOnly ? ' active' : '');
   favBtn.innerHTML = `❤️ お気に入り <span class="pill-count">${favorites.size}</span>`;
   favBtn.onclick = () => { showFavOnly = !showFavOnly; renderPrefectureFilter(); renderProperties(); };
   bar.appendChild(favBtn);
 
+  // Divider
+  const d1 = document.createElement('span'); d1.className = 'filter-divider'; bar.appendChild(d1);
+
+  // Type pills: 新築 / 中古
+  const mkTypePill = (type, label, count, isChuko) => {
+    const btn = document.createElement('button');
+    const active = selectedTypes.has(type);
+    btn.className = `pref-pill${isChuko ? ' type-pill-chuko' : ''}${active ? ' active' : ''}`;
+    btn.innerHTML = `${label} <span class="pill-count">${count}</span>`;
+    btn.onclick = () => {
+      if (selectedTypes.has(type)) selectedTypes.delete(type);
+      else selectedTypes.add(type);
+      renderPrefectureFilter(); renderProperties();
+    };
+    bar.appendChild(btn);
+  };
+  mkTypePill('new',   '新築', newCount,   false);
+  mkTypePill('chuko', '中古', chukoCount, true);
+
   if (groups.size === 0) return;
 
-  const divider = document.createElement('span');
-  divider.className = 'filter-divider';
-  bar.appendChild(divider);
+  // Divider
+  const d2 = document.createElement('span'); d2.className = 'filter-divider'; bar.appendChild(d2);
 
-  // "すべて" pill
+  // "すべて" prefecture pill
   const allBtn = document.createElement('button');
   allBtn.className = 'pref-pill' + (selectedPrefectures.size === 0 ? ' active' : '');
   allBtn.textContent = 'すべて';
   allBtn.onclick = () => { selectedPrefectures.clear(); renderPrefectureFilter(); renderProperties(); };
   bar.appendChild(allBtn);
 
+  // Per-prefecture pills
   sortedPrefectures(groups).forEach(pref => {
     const btn = document.createElement('button');
     btn.className = 'pref-pill' + (selectedPrefectures.has(pref) ? ' active' : '');
@@ -601,8 +691,7 @@ function renderPrefectureFilter() {
     btn.onclick = () => {
       if (selectedPrefectures.has(pref)) selectedPrefectures.delete(pref);
       else selectedPrefectures.add(pref);
-      renderPrefectureFilter();
-      renderProperties();
+      renderPrefectureFilter(); renderProperties();
     };
     bar.appendChild(btn);
   });
@@ -610,11 +699,12 @@ function renderPrefectureFilter() {
 
 // ── Sync marker visibility ─────────────────────────────────────────────────────
 function syncMarkerVisibility() {
-  Object.entries(markerMap).forEach(([id, { marker }]) => {
+  Object.entries(markerMap).forEach(([id, { marker, property }]) => {
     const pref    = prefectureMap.get(id);
     const prefOk  = selectedPrefectures.size === 0 || (pref && selectedPrefectures.has(pref));
     const favOk   = !showFavOnly || favorites.has(id);
-    const visible = prefOk && favOk;
+    const typeOk  = selectedTypes.size === 0 || selectedTypes.has(property?.type || 'new');
+    const visible = prefOk && favOk && typeOk;
     marker.setMap(visible ? gmap : null);
     if (visible) marker.setIcon(getIcon(id));
   });
@@ -626,19 +716,34 @@ function isNew(dateStr) {
 }
 
 function buildRow(p) {
-  const isFav  = favorites.has(p.id);
-  const sid    = safeId(p.id);
-  const hasGeo = !!markerMap[p.id];
-  const walk   = p.walkMin ? `徒歩${p.walkMin}分` : (p.busMin ? `バス${p.busMin}分` : '—');
+  const isChuko = p.type === 'chuko';
+  const isFav   = favorites.has(p.id);
+  const sid     = safeId(p.id);
+  const hasGeo  = !!markerMap[p.id];
+  const walk    = p.walkMin ? `徒歩${p.walkMin}分` : (p.busMin ? `バス${p.busMin}分` : '—');
   const dateStr = p.pubDate
     ? new Date(p.pubDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })
     : '—';
+
+  // Subtitle line
+  let subParts = [];
+  if (isChuko) {
+    if (p.area)      subParts.push(`${p.area}㎡`);
+    if (p.direction) subParts.push(p.direction);
+    if (p.floorInfo) subParts.push(`${p.floorInfo}階`);
+    if (p.age)       subParts.push(`築${p.age}年`);
+    if (p.price)     subParts.push(`${p.price}万円`);
+  }
+
+  // Address sub-line (populated by geocoder)
   const geo  = markerMap[p.id]?.geo;
   const addr = geo?.resolvedAddress || geo?.address || '';
 
   const tr = document.createElement('tr');
   tr.id = sid;
-  if (isFav) tr.classList.add('row-fav');
+  if (isChuko) tr.classList.add('row-chuko');
+  else         tr.classList.add('row-new');
+  if (isFav)   tr.classList.add('row-fav');
 
   tr.innerHTML = `
     <td class="col-pin">
@@ -647,14 +752,15 @@ function buildRow(p) {
     </td>
     <td class="col-title">
       <div class="row-title">
-        ${isNew(p.pubDate) ? '<span class="new-badge">NEW</span>' : ''}
-        <a href="${p.link}" target="_blank">${esc(p.title)}</a>
+        <span class="type-badge ${isChuko ? 'chuko' : 'new'}">${isChuko ? '中古' : '新築'}</span>${isNew(p.pubDate) ? '<span class="new-badge">NEW</span>' : ''}<a href="${p.link}" target="_blank">${esc(p.title)}</a>
       </div>
-      <div class="row-addr" id="addr-${sid}" ${addr ? '' : 'style="display:none"'}>${addr ? esc(addr) : ''}</div>
+      ${subParts.length ? `<div class="row-sub">${esc(subParts.join(' · '))}</div>` : ''}
+      <div class="row-sub" id="addr-${sid}" ${addr ? '' : 'style="display:none"'}
+           data-base="${esc(subParts.join(' · '))}">${addr ? esc(addr) : ''}</div>
     </td>
     <td class="col-station">${p.station ? esc(p.station) + '駅' : '—'}</td>
     <td class="col-walk">${walk}</td>
-    <td class="col-units">${p.totalUnits ? p.totalUnits + '戸' : '—'}</td>
+    <td class="col-units">${p.totalUnits ? p.totalUnits + '戸' : (isChuko ? p.floorInfo ? `${p.floorInfo}階` : '—' : '—')}</td>
     <td class="col-date">${dateStr}</td>
     <td class="col-actions">
       <button class="btn-fav" onclick="toggleFavorite(${JSON.stringify(p.id)})"
@@ -665,12 +771,13 @@ function buildRow(p) {
   return tr;
 }
 
-// ── Render ─────────────────────────────────────────────────────────────────────
+// ── Render properties ──────────────────────────────────────────────────────────
 function renderProperties() {
   const container = document.getElementById('property-grid');
 
   let visible = [...allProperties];
-  if (showFavOnly) visible = visible.filter(p => favorites.has(p.id));
+  if (showFavOnly)              visible = visible.filter(p => favorites.has(p.id));
+  if (selectedTypes.size > 0)   visible = visible.filter(p => selectedTypes.has(p.type || 'new'));
   if (selectedPrefectures.size > 0) {
     visible = visible.filter(p => {
       const pref = prefectureMap.get(p.id);
@@ -690,10 +797,12 @@ function renderProperties() {
     emptyEl.style.display = 'none';
   }
 
-  document.getElementById('header-count').textContent = `${allProperties.length} 件`;
+  const newCnt   = allProperties.filter(p => p.type !== 'chuko').length;
+  const chukoCnt = CHUKO_DATA.length;
+  document.getElementById('header-count').textContent = `${newCnt + chukoCnt} 件`;
   document.getElementById('status-text').innerHTML =
-    `<strong>${allProperties.length}</strong> 件` +
-    (favorites.size ? ` <span style="color:#f59e0b">/ ❤️ ${favorites.size} 件お気に入り</span>` : '');
+    `<strong>${newCnt}</strong> 件新築 · <strong>${chukoCnt}</strong> 件中古` +
+    (favorites.size ? ` <span style="color:#f59e0b">/ ❤️ ${favorites.size}</span>` : '');
 
   // Group by prefecture
   const groups = new Map();
@@ -715,7 +824,13 @@ function renderProperties() {
     if (!onlyUnknown) {
       const hdr = document.createElement('div');
       hdr.className = 'pref-header';
-      hdr.innerHTML = `<span class="pref-name">${esc(pref)}</span><span class="pref-count">${props.length}件</span>`;
+      const newInGroup   = props.filter(p => p.type !== 'chuko').length;
+      const chukoInGroup = props.filter(p => p.type === 'chuko').length;
+      const countStr = [
+        newInGroup   ? `新築 ${newInGroup}件`   : '',
+        chukoInGroup ? `中古 ${chukoInGroup}件` : '',
+      ].filter(Boolean).join(' · ');
+      hdr.innerHTML = `<span class="pref-name">${esc(pref)}</span><span class="pref-count">${countStr}</span>`;
       section.appendChild(hdr);
     }
 
@@ -725,18 +840,15 @@ function renderProperties() {
     const table = document.createElement('table');
     table.className = 'property-table';
 
-    // Build thead with sortable headers
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
-    const pinTh = document.createElement('th');
-    headerRow.appendChild(pinTh);
+    headerRow.appendChild(document.createElement('th'));
     headerRow.appendChild(thSort('title',   '物件名'));
     headerRow.appendChild(thSort('station', '最寄駅'));
     headerRow.appendChild(thSort('walk',    '徒歩', 'th-walk'));
-    headerRow.appendChild(thSort('units',   '戸数', 'th-units'));
+    headerRow.appendChild(thSort('units',   '階数 / 戸数', 'th-units'));
     headerRow.appendChild(thSort('date',    '登録日', 'th-date'));
-    const actionTh = document.createElement('th');
-    headerRow.appendChild(actionTh);
+    headerRow.appendChild(document.createElement('th'));
     thead.appendChild(headerRow);
     table.appendChild(thead);
 
@@ -763,7 +875,7 @@ window.toggleFavorite = function (id) {
   }
 };
 
-// ── Load & refresh ─────────────────────────────────────────────────────────────
+// ── Load ───────────────────────────────────────────────────────────────────────
 async function loadProperties() {
   document.getElementById('loading-state').style.display = 'block';
   document.getElementById('error-state').style.display   = 'none';
@@ -772,7 +884,16 @@ async function loadProperties() {
   try {
     const data = await fetch(`${API_BASE}/api/properties`).then(r => r.json());
     if (data.error) throw new Error(data.error);
-    allProperties = data.properties || [];
+
+    // Merge: 新築 from RSS + 中古 from CSV
+    allProperties = [
+      ...(data.properties || []).map(p => ({ ...p, type: 'new' })),
+      ...CHUKO_DATA,
+    ];
+
+    // Pre-assign prefecture for 中古 (all are Tokyo 区s)
+    CHUKO_DATA.forEach(p => prefectureMap.set(p.id, '東京都'));
+
     document.getElementById('loading-state').style.display = 'none';
     renderPrefectureFilter();
     renderProperties();
@@ -783,6 +904,14 @@ async function loadProperties() {
     console.error(err);
   }
 }
+
+// ── Refresh ────────────────────────────────────────────────────────────────────
+window.refreshProperties = function () {
+  Object.values(markerMap).forEach(({ marker }) => marker.setMap(null));
+  Object.keys(markerMap).forEach(k => delete markerMap[k]);
+  prefectureMap.clear(); selectedPrefectures.clear(); boundsRef.bounds = null;
+  loadProperties();
+};
 
 // ── Settings modal ─────────────────────────────────────────────────────────────
 window.openSettings = function () {
@@ -800,13 +929,6 @@ window.saveSettings = function () {
   const val = document.getElementById('api-url-input').value.trim().replace(/\/$/, '');
   if (val) localStorage.setItem('suumo_api_base', val);
   location.reload();
-};
-
-window.refreshProperties = function () {
-  Object.values(markerMap).forEach(({ marker }) => marker.setMap(null));
-  Object.keys(markerMap).forEach(k => delete markerMap[k]);
-  prefectureMap.clear(); selectedPrefectures.clear(); boundsRef.bounds = null;
-  loadProperties();
 };
 </script>
 
