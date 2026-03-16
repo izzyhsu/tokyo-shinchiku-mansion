@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: tokyo-shinchiku-mansion
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: GOOGLE_MAPS_KEY
+        sync: false   # set manually in Render dashboard — never committed to git
