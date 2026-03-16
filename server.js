@@ -11,8 +11,10 @@ const __dirname  = path.dirname(__filename);
 const app  = express();
 const PORT = process.env.PORT || 3001;
 
-const GOOGLE_MAPS_KEY = process.env.GOOGLE_MAPS_KEY || '';
-if (!GOOGLE_MAPS_KEY) console.warn('⚠️  GOOGLE_MAPS_KEY not set');
+const GOOGLE_MAPS_BROWSER_KEY = process.env.GOOGLE_MAPS_BROWSER_KEY || '';
+const GOOGLE_MAPS_SERVER_KEY  = process.env.GOOGLE_MAPS_SERVER_KEY || '';
+if (!GOOGLE_MAPS_BROWSER_KEY) console.warn('⚠️  GOOGLE_MAPS_BROWSER_KEY not set');
+if (!GOOGLE_MAPS_SERVER_KEY)  console.warn('⚠️  GOOGLE_MAPS_SERVER_KEY not set');
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -39,7 +41,7 @@ console.log(`📦 Geocache loaded: ${Object.keys(geocache).length} entries`);
 async function googleGeocode(address) {
   try {
     const res = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
-      params: { address, key: GOOGLE_MAPS_KEY, region: 'jp', language: 'ja' },
+      params: { address, key: GOOGLE_MAPS_SERVER_KEY, region: 'jp', language: 'ja' },
       timeout: 6000,
     });
     const hit = res.data?.results?.[0];
@@ -55,7 +57,7 @@ async function googleGeocode(address) {
 async function googlePlacesSearch(query) {
   try {
     const res = await axios.get('https://maps.googleapis.com/maps/api/place/textsearch/json', {
-      params: { query, key: GOOGLE_MAPS_KEY, language: 'ja', region: 'jp' },
+      params: { query, key: GOOGLE_MAPS_SERVER_KEY, language: 'ja', region: 'jp' },
       timeout: 6000,
     });
     const hit = res.data?.results?.[0];
@@ -100,7 +102,7 @@ async function scrapePropertyAddress(url) {
 // ── Routes ─────────────────────────────────────────────────────────────────────
 
 app.get('/api/config', (req, res) => {
-  res.json({ mapsKey: GOOGLE_MAPS_KEY });
+  res.json({ mapsKey: GOOGLE_MAPS_BROWSER_KEY });
 });
 
 // Unified geocode endpoint — cache-first, full fallback chain

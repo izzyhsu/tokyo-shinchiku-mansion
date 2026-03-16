@@ -5,5 +5,7 @@ services:
     buildCommand: npm install
     startCommand: node server.js
     envVars:
-      - key: GOOGLE_MAPS_KEY
-        sync: false   # set manually in Render dashboard — never committed to git
+      - key: GOOGLE_MAPS_BROWSER_KEY
+        sync: false   # browser-only key; restrict by HTTP referrer in Google Cloud
+      - key: GOOGLE_MAPS_SERVER_KEY
+        sync: false   # server-only key; restrict by API and server/IP as tightly as possible
