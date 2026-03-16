@@ -34,192 +34,6 @@
       margin-left: auto; background: rgba(255,255,255,.2);
       color: #fff; font-size: 12px; padding: 3px 10px; border-radius: 20px;
     }
-    .btn-show-all {
-      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.4);
-      color: #fff; font-size: 12px; padding: 4px 12px; border-radius: 20px;
-      cursor: pointer; transition: background .15s;
-    }
-    .btn-show-all:hover { background: rgba(255,255,255,.3); }
-
-    /* ── Map ─────────────────────────────────────────────────────────────────── */
-    #map-section {
-      position: relative;
-      width: 100%;
-      height: 56vh;
-      min-height: 400px;
-    }
-    #map { width: 100%; height: 100%; }
-
-    /* legend pill */
-    #map-legend {
-      position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-      z-index: 5;
-      display: flex; gap: 14px; align-items: center;
-      background: rgba(255,255,255,.93); border-radius: 24px;
-      padding: 6px 16px; font-size: 12px; color: #444;
-      box-shadow: 0 2px 8px rgba(0,0,0,.18);
-      pointer-events: none; white-space: nowrap;
-    }
-    .legend-dot {
-      width: 11px; height: 11px; border-radius: 50%; display: inline-block;
-      box-shadow: 0 1px 3px rgba(0,0,0,.3);
-    }
-    .legend-item { display: flex; align-items: center; gap: 5px; }
-
-    /* geocode progress */
-    #geocode-status {
-      position: absolute; bottom: 10px; left: 10px; z-index: 5;
-      background: rgba(255,255,255,.93); border-radius: 8px;
-      padding: 5px 12px; font-size: 11px; color: #555;
-      box-shadow: var(--shadow); display: none;
-    }
-
-
-    /* ── Main content ────────────────────────────────────────────────────────── */
-    main { max-width: 1200px; margin: 0 auto; padding: 20px 20px 60px; }
-
-    /* status bar */
-    #status-bar {
-      display: flex; align-items: center; gap: 12px;
-      margin-bottom: 16px; font-size: 13px; color: var(--grey);
-    }
-    #status-bar strong { color: #111; }
-    #status-bar .spacer { flex: 1; }
-    #status-bar button {
-      background: none; border: 1px solid var(--border); border-radius: 6px;
-      padding: 5px 12px; font-size: 12px; cursor: pointer; color: var(--grey);
-      transition: border-color .15s, color .15s;
-    }
-    #status-bar button:hover { border-color: var(--red); color: var(--red); }
-
-    /* loading / error */
-    #loading-state, #error-state {
-      text-align: center; padding: 60px 20px; color: var(--grey);
-    }
-    #error-state { color: var(--red); }
-    .spinner {
-      width: 36px; height: 36px; border: 3px solid #e5e7eb;
-      border-top-color: var(--red); border-radius: 50%;
-      animation: spin .7s linear infinite; margin: 0 auto 16px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Prefecture filter bar ───────────────────────────────────────────────── */
-    #pref-filter {
-      display: flex; flex-wrap: wrap; gap: 8px;
-      margin-bottom: 20px;
-    }
-    .pref-pill {
-      padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
-      border: 1.5px solid var(--border); background: var(--white); color: var(--grey);
-      cursor: pointer; transition: border-color .15s, background .15s, color .15s;
-      display: flex; align-items: center; gap: 5px; white-space: nowrap;
-    }
-    .pref-pill:hover { border-color: var(--red); color: var(--red); }
-    .pref-pill.active {
-      background: var(--red); border-color: var(--red); color: #fff;
-    }
-    .pref-pill.active .pill-count { color: rgba(255,255,255,.8); }
-    .pill-count { font-size: 11px; color: #9ca3af; }
-
-    /* ── Prefecture sections ─────────────────────────────────────────────────── */
-    .pref-section { margin-bottom: 32px; }
-
-    .pref-header {
-      display: flex; align-items: baseline; gap: 10px;
-      margin-bottom: 14px; padding-bottom: 10px;
-      border-bottom: 2.5px solid var(--red);
-    }
-    .pref-name  { font-size: 17px; font-weight: 800; color: #111; }
-    .pref-count { font-size: 13px; color: var(--grey); }
-
-    .pref-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
-    }
-
-    /* property grid (legacy, kept for safety) */
-    #property-grid {}
-
-    /* ── Card ────────────────────────────────────────────────────────────────── */
-    .card {
-      background: var(--white); border-radius: var(--radius);
-      box-shadow: var(--shadow); overflow: hidden;
-      transition: box-shadow .2s, transform .2s;
-      border: 2px solid transparent;
-    }
-    .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.13); transform: translateY(-2px); }
-    .card.highlighted {
-      border-color: var(--red);
-      box-shadow: 0 0 0 3px rgba(232,53,26,.15), 0 4px 16px rgba(0,0,0,.14);
-    }
-    .card.dismissed { opacity: .42; filter: grayscale(.55); }
-
-    .card-header {
-      padding: 14px 14px 8px;
-      display: flex; align-items: flex-start; gap: 10px;
-    }
-    .card-map-btn {
-      flex-shrink: 0; width: 32px; height: 32px;
-      background: #fef2f2; border: none; border-radius: 7px;
-      cursor: pointer; font-size: 16px; display: flex; align-items: center;
-      justify-content: center; transition: background .15s;
-    }
-    .card-map-btn:hover { background: #fee2e2; }
-    .card-map-btn.no-geo { opacity: .25; cursor: default; pointer-events: none; }
-
-    .card-title-wrap { flex: 1; }
-    .card-title {
-      font-size: 13.5px; font-weight: 700; line-height: 1.4; color: #111;
-    }
-    .card-title a { color: inherit; text-decoration: none; }
-    .card-title a:hover { color: var(--red); }
-    .card-date { font-size: 11px; color: #9ca3af; margin-top: 3px; }
-
-    .new-badge {
-      flex-shrink: 0;
-      background: var(--red); color: #fff; font-size: 10px;
-      padding: 2px 7px; border-radius: 4px; align-self: flex-start;
-    }
-
-    .card-body { padding: 0 14px 10px; }
-    .card-price {
-      font-size: 18px; font-weight: 800; color: var(--red); margin-bottom: 8px;
-    }
-    .card-price small { font-size: 12px; font-weight: 400; color: var(--grey); }
-
-    .card-meta {
-      display: flex; flex-wrap: wrap; gap: 4px 10px;
-      font-size: 12px; color: var(--grey); margin-bottom: 6px;
-    }
-    .meta-station::before { content: "🚉 "; }
-    .meta-walk::before    { content: "🚶 "; }
-    .meta-units::before   { content: "🏢 "; }
-    .meta-addr { font-size: 11px; color: #9ca3af; display: none; }
-    .meta-addr::before { content: "📍 "; }
-
-    .card-footer { display: flex; gap: 8px; padding: 0 14px 14px; }
-    .btn-open {
-      flex: 1; text-align: center; background: var(--red); color: #fff;
-      border: none; border-radius: 6px; padding: 8px 0; font-size: 12px;
-      font-weight: 600; cursor: pointer; text-decoration: none;
-      transition: background .15s;
-    }
-    .btn-open:hover { background: var(--red-dk); }
-    .btn-dismiss {
-      background: #f9fafb; border: 1px solid var(--border); color: var(--grey);
-      border-radius: 6px; padding: 8px 12px; font-size: 12px;
-      cursor: pointer; transition: border-color .15s, color .15s;
-    }
-    .btn-dismiss:hover { border-color: #d1d5db; color: #374151; }
-    .card.dismissed .btn-dismiss { background: #fff0ee; border-color: #fca5a5; color: var(--red); }
-
-    /* empty state */
-    #empty-state { display: none; text-align: center; padding: 60px 20px; color: var(--grey); }
-    #empty-state .icon { font-size: 48px; margin-bottom: 12px; }
-
-    /* ── Settings ────────────────────────────────────────────────────────────── */
     .btn-settings {
       background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.4);
       color: #fff; font-size: 15px; width: 32px; height: 32px;
@@ -228,6 +42,173 @@
     }
     .btn-settings:hover { background: rgba(255,255,255,.3); }
 
+    /* ── Map ─────────────────────────────────────────────────────────────────── */
+    #map-section { position: relative; width: 100%; height: 56vh; min-height: 400px; }
+    #map { width: 100%; height: 100%; }
+
+    #map-legend {
+      position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+      z-index: 5; display: flex; gap: 14px; align-items: center;
+      background: rgba(255,255,255,.93); border-radius: 24px;
+      padding: 6px 16px; font-size: 12px; color: #444;
+      box-shadow: 0 2px 8px rgba(0,0,0,.18);
+      pointer-events: none; white-space: nowrap;
+    }
+    .legend-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+
+    #geocode-status {
+      position: absolute; bottom: 10px; left: 10px; z-index: 5;
+      background: rgba(255,255,255,.93); border-radius: 8px;
+      padding: 5px 12px; font-size: 11px; color: #555;
+      box-shadow: var(--shadow); display: none;
+    }
+
+    /* ── Main content ────────────────────────────────────────────────────────── */
+    main { max-width: 1200px; margin: 0 auto; padding: 20px 20px 60px; }
+
+    /* status bar */
+    #status-bar {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 14px; font-size: 13px; color: var(--grey);
+    }
+    #status-bar strong { color: #111; }
+    #status-bar .spacer { flex: 1; }
+    #status-bar button {
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 5px 12px; font-size: 12px; cursor: pointer; color: var(--grey);
+      transition: border-color .15s, color .15s; white-space: nowrap;
+    }
+    #status-bar button:hover { border-color: var(--red); color: var(--red); }
+
+    /* loading / error */
+    #loading-state, #error-state { text-align: center; padding: 60px 20px; color: var(--grey); }
+    #error-state { color: var(--red); }
+    .spinner {
+      width: 36px; height: 36px; border: 3px solid #e5e7eb;
+      border-top-color: var(--red); border-radius: 50%;
+      animation: spin .7s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Filter bar ──────────────────────────────────────────────────────────── */
+    #filter-bar { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
+    #pref-filter { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .pref-pill {
+      padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
+      border: 1.5px solid var(--border); background: var(--white); color: var(--grey);
+      cursor: pointer; transition: border-color .15s, background .15s, color .15s;
+      display: flex; align-items: center; gap: 5px; white-space: nowrap;
+    }
+    .pref-pill:hover { border-color: var(--red); color: var(--red); }
+    .pref-pill.active { background: var(--red); border-color: var(--red); color: #fff; }
+    .pref-pill.active .pill-count { color: rgba(255,255,255,.8); }
+    .pill-count { font-size: 11px; color: #9ca3af; }
+
+    .filter-divider { width: 1px; background: var(--border); align-self: stretch; margin: 2px 0; }
+
+    /* ── Prefecture sections ─────────────────────────────────────────────────── */
+    .pref-section { margin-bottom: 28px; }
+    .pref-header {
+      display: flex; align-items: baseline; gap: 10px;
+      margin-bottom: 10px; padding-bottom: 8px;
+      border-bottom: 2.5px solid var(--red);
+    }
+    .pref-name  { font-size: 16px; font-weight: 800; color: #111; }
+    .pref-count { font-size: 13px; color: var(--grey); }
+
+    /* ── Table layout ────────────────────────────────────────────────────────── */
+    .table-wrapper {
+      width: 100%; overflow-x: auto;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+    .property-table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+    }
+    .property-table thead th {
+      background: #f8f9fa;
+      border-bottom: 2px solid var(--border);
+      padding: 9px 12px;
+      text-align: left; font-size: 11px; font-weight: 600;
+      color: var(--grey); text-transform: uppercase;
+      letter-spacing: .5px; white-space: nowrap;
+    }
+    .property-table thead th.th-right { text-align: right; }
+    .property-table tbody tr {
+      border-bottom: 1px solid #f3f4f6;
+      transition: background .12s;
+    }
+    .property-table tbody tr:last-child { border-bottom: none; }
+    .property-table tbody tr:hover { background: #fef9f9; }
+    .property-table tbody tr.row-dismissed { opacity: .42; filter: grayscale(.5); }
+    .property-table tbody tr.row-fav { background: #fff8f8; }
+    .property-table tbody tr.row-fav td.col-pin { box-shadow: inset 3px 0 0 var(--red); }
+    .property-table td { padding: 10px 12px; vertical-align: middle; }
+
+    /* Column specifics */
+    .col-pin { width: 40px; padding: 8px 6px; text-align: center; }
+    .col-title { min-width: 200px; }
+    .col-price { white-space: nowrap; font-weight: 700; color: var(--red); font-size: 14px; min-width: 100px; }
+    .col-station { white-space: nowrap; min-width: 90px; }
+    .col-walk { white-space: nowrap; min-width: 70px; color: var(--grey); }
+    .col-units { white-space: nowrap; text-align: right; color: var(--grey); }
+    .col-date { white-space: nowrap; color: #9ca3af; font-size: 12px; }
+    .col-actions { white-space: nowrap; text-align: right; min-width: 120px; }
+
+    .row-title { font-weight: 600; font-size: 13px; color: #111; line-height: 1.4; }
+    .row-title a { color: inherit; text-decoration: none; }
+    .row-title a:hover { color: var(--red); }
+    .row-addr { font-size: 11px; color: #9ca3af; margin-top: 2px; line-height: 1.4; }
+
+    .new-badge {
+      display: inline-block;
+      background: var(--red); color: #fff; font-size: 9px; font-weight: 700;
+      padding: 1px 5px; border-radius: 3px; vertical-align: middle; margin-right: 3px;
+    }
+
+    /* Pin button in table */
+    .pin-btn {
+      width: 30px; height: 30px;
+      background: #fef2f2; border: none; border-radius: 6px;
+      cursor: pointer; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s; margin: 0 auto;
+    }
+    .pin-btn:hover { background: #fee2e2; }
+    .pin-btn.no-geo { opacity: .2; cursor: default; pointer-events: none; }
+
+    /* Action buttons */
+    .btn-fav {
+      background: none; border: none; font-size: 16px; cursor: pointer;
+      padding: 3px 5px; border-radius: 4px;
+      transition: transform .15s; vertical-align: middle; line-height: 1;
+    }
+    .btn-fav:hover { transform: scale(1.25); }
+    .btn-skip {
+      font-size: 11px; padding: 4px 8px; border-radius: 5px;
+      border: 1px solid var(--border); background: #f9fafb;
+      color: var(--grey); cursor: pointer;
+      transition: border-color .15s, color .15s; vertical-align: middle;
+    }
+    .btn-skip:hover { border-color: #d1d5db; color: #374151; }
+    .btn-skip.active { background: #fff0ee; border-color: #fca5a5; color: var(--red); }
+    .btn-detail {
+      font-size: 11px; padding: 4px 9px; border-radius: 5px;
+      border: none; background: var(--red); color: #fff;
+      text-decoration: none; font-weight: 600;
+      transition: background .15s; vertical-align: middle;
+    }
+    .btn-detail:hover { background: var(--red-dk); }
+
+    /* empty state */
+    #empty-state { display: none; text-align: center; padding: 60px 20px; color: var(--grey); }
+    #empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+    /* ── Settings modal ──────────────────────────────────────────────────────── */
     #settings-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,.4);
       z-index: 2000; backdrop-filter: blur(2px);
@@ -240,23 +221,20 @@
     }
 
     /* ── Mobile ──────────────────────────────────────────────────────────────── */
-    @media (max-width: 600px) {
+    @media (max-width: 640px) {
       header { padding: 0 12px; gap: 8px; }
       header h1 { font-size: 15px; }
-      .btn-show-all { display: none; }
-
       #map-section { height: 48vh; min-height: 280px; }
       #map-legend { font-size: 11px; padding: 5px 12px; gap: 10px; }
-
       main { padding: 14px 12px 60px; }
-
-      #property-grid { grid-template-columns: 1fr; gap: 12px; }
-
-      .card-price { font-size: 16px; }
-      .card-footer { flex-direction: column; gap: 6px; }
-      .btn-open, .btn-dismiss { width: 100%; text-align: center; }
-
-      #status-bar { font-size: 12px; }
+      #status-bar { font-size: 12px; flex-wrap: wrap; }
+      /* Hide less-important columns on mobile */
+      .col-units, .col-date, .col-walk { display: none; }
+      .property-table thead th.th-units,
+      .property-table thead th.th-date,
+      .property-table thead th.th-walk { display: none; }
+      .col-price { font-size: 13px; }
+      .col-actions { min-width: unset; }
     }
   </style>
 </head>
@@ -269,9 +247,8 @@
     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
     <polyline points="9 22 9 12 15 12 15 22"/>
   </svg>
-  <h1>Tokyo Shinchiku Mansion <span style="font-size:11px;font-weight:400;opacity:.7;letter-spacing:.3px">v0.0.1</span></h1>
+  <h1>Tokyo Shinchiku Mansion <span style="font-size:11px;font-weight:400;opacity:.7;letter-spacing:.3px">v0.0.2</span></h1>
   <span class="header-badge" id="header-count">読込中…</span>
-  <button class="btn-show-all" id="btn-show-all" onclick="showAll()">スキップ済みを表示</button>
   <button class="btn-settings" onclick="openSettings()" title="API設定">⚙️</button>
 </header>
 
@@ -303,16 +280,17 @@
 <!-- ── Google Map ──────────────────────────────────────────────────────────── -->
 <div id="map-section">
   <div id="map"></div>
-
   <div id="map-legend">
     <div class="legend-item">
       <span class="legend-dot" style="background:#e8351a"></span>気になる物件
     </div>
     <div class="legend-item">
+      <span class="legend-dot" style="background:#f59e0b"></span>お気に入り
+    </div>
+    <div class="legend-item">
       <span class="legend-dot" style="background:#9ca3af"></span>スキップ済み
     </div>
   </div>
-
   <div id="geocode-status"></div>
 </div>
 
@@ -321,6 +299,7 @@
   <div id="status-bar">
     <span id="status-text">読み込み中…</span>
     <span class="spacer"></span>
+    <button id="btn-show-all" onclick="showAll()">スキップ済みを表示</button>
     <button onclick="refreshProperties()">↻ 更新</button>
   </div>
 
@@ -337,8 +316,9 @@
     </button>
   </div>
 
-  <!-- Prefecture filter pills — populated dynamically after geocoding -->
-  <div id="pref-filter" style="display:none"></div>
+  <div id="filter-bar" style="display:none">
+    <div id="pref-filter"></div>
+  </div>
 
   <div id="property-grid"></div>
   <div id="empty-state">
@@ -349,33 +329,31 @@
 
 <!-- ── App script ───────────────────────────────────────────────────────────── -->
 <script>
-// ── API base URL (configurable for GitHub Pages use) ──────────────────────────
-// Priority: ?api= URL param → localStorage (ignored if stored localhost but page is remote) → Render default
+// ── API base URL ───────────────────────────────────────────────────────────────
 const API_BASE = (() => {
   const param   = new URLSearchParams(location.search).get('api');
   const stored  = localStorage.getItem('suumo_api_base');
   const isRemote = !location.hostname.match(/^(localhost|127\.|192\.168\.|10\.|172\.)/);
-
-  // Discard a stored localhost URL when the page is accessed remotely
   const effective = (stored && !(isRemote && stored.match(/^http:\/\/(localhost|127\.)/)))
     ? stored : null;
-
   return (param || effective || 'https://tokyo-shinchiku-mansion.onrender.com').replace(/\/$/, '');
 })();
 
 // ── State ──────────────────────────────────────────────────────────────────────
 let allProperties  = [];
 let dismissed      = new Set(JSON.parse(localStorage.getItem('dismissed') || '[]'));
+let favorites      = new Set(JSON.parse(localStorage.getItem('favorites') || '[]'));
 let showDismissed  = false;
-const prefectureMap      = new Map();  // property id → prefecture string
-const selectedPrefectures = new Set(); // empty = show all
+let showFavOnly    = false;
+const prefectureMap       = new Map();
+const selectedPrefectures = new Set();
 
 // ── Google Maps globals ────────────────────────────────────────────────────────
 let gmap, infoWindow;
-const markerMap = {};          // id → { marker, geo, property }
-const boundsRef = { bounds: null };
+const markerMap  = {};
+const boundsRef  = { bounds: null };
 
-// ── Google Maps SVG pin icon ───────────────────────────────────────────────────
+// ── Marker icons ───────────────────────────────────────────────────────────────
 function makeIcon(fill, scale = 1) {
   const w = Math.round(28 * scale), h = Math.round(40 * scale);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 28 40">
@@ -389,69 +367,62 @@ function makeIcon(fill, scale = 1) {
     anchor:     new google.maps.Point(w / 2, h),
   };
 }
-
 function getIcon(id) {
-  return dismissed.has(id) ? makeIcon('#9ca3af', .8) : makeIcon('#e8351a');
+  if (dismissed.has(id)) return makeIcon('#9ca3af', .8);
+  if (favorites.has(id)) return makeIcon('#f59e0b');
+  return makeIcon('#e8351a');
 }
 
-// ── Map init (called by Google Maps API callback) ─────────────────────────────
+// ── Map init ───────────────────────────────────────────────────────────────────
 window.initMap = function () {
   gmap = new google.maps.Map(document.getElementById('map'), {
-    center: { lat: 35.6762, lng: 139.6503 },
-    zoom: 11,
-    mapTypeControl:    false,
-    streetViewControl: false,
-    fullscreenControl: true,
+    center: { lat: 35.6762, lng: 139.6503 }, zoom: 11,
+    mapTypeControl: false, streetViewControl: false, fullscreenControl: true,
     zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
   });
   infoWindow = new google.maps.InfoWindow({ maxWidth: 280 });
   loadProperties();
 };
 
-// ── Marker management ──────────────────────────────────────────────────────────
-// Use fully inline styles — Google Maps InfoWindow has its own CSS scope
-// so external stylesheet classes are unreliable inside it.
+// ── InfoWindow content ─────────────────────────────────────────────────────────
 function buildInfoContent(p, geo) {
   const walk = p.walkMin ? `徒歩${p.walkMin}分` : (p.busMin ? `バス${p.busMin}分` : '');
   const meta = [p.station ? `${p.station}駅` : '', walk, p.totalUnits ? `${p.totalUnits}戸` : '']
                .filter(Boolean).join(' · ');
+  const isFav = favorites.has(p.id);
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-width:210px;max-width:260px">
       <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:5px;line-height:1.45">${esc(p.title)}</div>
       ${meta    ? `<div style="font-size:12px;color:#6b7280;margin-bottom:5px;line-height:1.6">${esc(meta)}</div>` : ''}
       ${p.price ? `<div style="font-size:16px;font-weight:800;color:#e8351a;margin-bottom:6px">${esc(p.price)}</div>` : ''}
       ${(geo.resolvedAddress || geo.address) ? `<div style="font-size:11px;color:#9ca3af;margin-bottom:10px;line-height:1.4">📍 ${esc(geo.resolvedAddress || geo.address)}</div>` : ''}
-      <a href="${p.link}" target="_blank"
-         style="display:block;text-align:center;padding:8px 12px;border-radius:7px;
-                font-size:13px;font-weight:600;text-decoration:none;
-                background:#e8351a;color:#ffffff;letter-spacing:.2px">
-        物件詳細を見る ↗
-      </a>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="toggleFavorite(${JSON.stringify(p.id)})"
+          style="flex-shrink:0;background:none;border:1px solid #e5e7eb;border-radius:7px;
+                 padding:6px 10px;font-size:15px;cursor:pointer;line-height:1">
+          ${isFav ? '❤️' : '🤍'}
+        </button>
+        <a href="${p.link}" target="_blank"
+           style="flex:1;display:block;text-align:center;padding:8px 12px;border-radius:7px;
+                  font-size:13px;font-weight:600;text-decoration:none;
+                  background:#e8351a;color:#ffffff;letter-spacing:.2px">
+          物件詳細を見る ↗
+        </a>
+      </div>
     </div>`;
 }
 
 function addMarker(p, geo) {
-  const pid = p.id;
-  if (markerMap[pid]) {
-    markerMap[pid].marker.setIcon(getIcon(pid));
-    return;
-  }
-
+  if (markerMap[p.id]) { markerMap[p.id].marker.setIcon(getIcon(p.id)); return; }
   const marker = new google.maps.Marker({
     position: { lat: geo.lat, lng: geo.lng },
-    map: gmap,
-    icon: getIcon(pid),
-    title: p.title,
+    map: gmap, icon: getIcon(p.id), title: p.title,
   });
-
-  // Only open info window — no auto-scroll to card list
   marker.addListener('click', () => {
     infoWindow.setContent(buildInfoContent(p, geo));
     infoWindow.open(gmap, marker);
   });
-
-  markerMap[pid] = { marker, geo, property: p };
-
+  markerMap[p.id] = { marker, geo, property: p };
   if (!boundsRef.bounds) boundsRef.bounds = new google.maps.LatLngBounds();
   boundsRef.bounds.extend({ lat: geo.lat, lng: geo.lng });
 }
@@ -463,7 +434,6 @@ function fitBounds() {
   }
 }
 
-// Publicly callable from card buttons
 window.focusMarker = function (id) {
   const entry = markerMap[id];
   if (!entry) return;
@@ -471,22 +441,18 @@ window.focusMarker = function (id) {
   infoWindow.open(gmap, entry.marker);
   gmap.panTo({ lat: entry.geo.lat, lng: entry.geo.lng });
   gmap.setZoom(15);
-  // scroll map into view if below fold
   document.getElementById('map-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
-// ── Geocoding — fully server-side with persistent cache ───────────────────────
-// Server handles: address scraping → Places API → Geocoding API → station fallback
-// Results cached in geocache.json — Google APIs only called for new entries.
+// ── Geocoding — server-side with persistent cache ─────────────────────────────
 async function geocodeProperty(p) {
   const params = new URLSearchParams();
   if (p.link)    params.set('link',    p.link);
   if (p.title)   params.set('title',   p.title);
   if (p.station) params.set('station', p.station);
   if (p.line)    params.set('line',    p.line);
-  try {
-    return await fetch(`${API_BASE}/api/geocode?${params}`).then(r => r.json());
-  } catch { return null; }
+  try { return await fetch(`${API_BASE}/api/geocode?${params}`).then(r => r.json()); }
+  catch { return null; }
 }
 
 async function geocodeAll(properties) {
@@ -494,15 +460,13 @@ async function geocodeAll(properties) {
   statusEl.style.display = 'block';
   statusEl.textContent   = '📍 地図上の位置を取得中…';
 
-  let done = 0;
-  let idx  = 0;
+  let done = 0, idx = 0;
   const CONCURRENCY = 4;
 
   async function worker() {
     while (idx < properties.length) {
       const p = properties[idx++];
       const geo = await geocodeProperty(p);
-
       if (geo?.lat) {
         addMarker(p, geo);
         done++;
@@ -511,6 +475,7 @@ async function geocodeAll(properties) {
         const pref = extractPrefecture(geo.address);
         if (pref) { prefectureMap.set(p.id, pref); scheduleRender(); renderPrefectureFilter(); }
 
+        // Update address cell in the table row
         const addrEl = document.getElementById(`addr-${safeId(p.id)}`);
         if (addrEl) {
           addrEl.textContent = geo.resolvedAddress || geo.address || `${p.station}駅付近`;
@@ -531,7 +496,6 @@ async function geocodeAll(properties) {
 }
 
 // ── Prefecture helpers ─────────────────────────────────────────────────────────
-// Only match kanji (\u4e00-\u9fff) before 都/道/府/県 to avoid "日本、埼玉県"
 const PREF_RE = /東京都|大阪府|京都府|北海道|[\u4e00-\u9fff]{2,5}[県]/u;
 
 function extractPrefecture(address) {
@@ -540,8 +504,6 @@ function extractPrefecture(address) {
   return m ? m[0] : null;
 }
 
-// Order: 東京都 first, then by property count desc, unknown last
-// Works with both Map<string, Array> and Map<string, number>
 function sortedPrefectures(groups) {
   const size = v => Array.isArray(v) ? v.length : (v || 0);
   return [...groups.keys()].sort((a, b) => {
@@ -560,59 +522,52 @@ function esc(s) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function scrollToCard(sid) {
-  const el = document.getElementById(sid);
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-function highlightCard(sid) {
-  document.querySelectorAll('.card.highlighted').forEach(c => c.classList.remove('highlighted'));
-  const el = document.getElementById(sid);
-  if (!el) return;
-  el.classList.add('highlighted');
-  setTimeout(() => el.classList.remove('highlighted'), 2500);
-}
-
-// Debounced re-render so rapid geocode results don't thrash the DOM
 let _renderTimer = null;
 function scheduleRender() {
   clearTimeout(_renderTimer);
   _renderTimer = setTimeout(renderProperties, 120);
 }
 
-// ── Prefecture filter bar ──────────────────────────────────────────────────────
+// ── Filter bar ─────────────────────────────────────────────────────────────────
 function renderPrefectureFilter() {
   const bar = document.getElementById('pref-filter');
+  const filterBar = document.getElementById('filter-bar');
   if (!bar) return;
 
-  // Collect unique known prefectures in display order
   const groups = new Map();
   allProperties.forEach(p => {
     const pref = prefectureMap.get(p.id);
     if (pref) groups.set(pref, (groups.get(pref) || 0) + 1);
   });
-  if (groups.size === 0) { bar.style.display = 'none'; return; }
 
-  bar.style.display = 'flex';
+  filterBar.style.display = 'block';
   bar.innerHTML = '';
+
+  // ❤️ Favorites pill — always first
+  const favBtn = document.createElement('button');
+  favBtn.className = 'pref-pill' + (showFavOnly ? ' active' : '');
+  favBtn.innerHTML = `❤️ お気に入り <span class="pill-count">${favorites.size}</span>`;
+  favBtn.onclick = () => { showFavOnly = !showFavOnly; renderPrefectureFilter(); renderProperties(); };
+  bar.appendChild(favBtn);
+
+  if (groups.size === 0) return;
+
+  // Divider
+  const div = document.createElement('span');
+  div.className = 'filter-divider';
+  bar.appendChild(div);
 
   // "すべて" pill
   const allBtn = document.createElement('button');
   allBtn.className = 'pref-pill' + (selectedPrefectures.size === 0 ? ' active' : '');
   allBtn.textContent = 'すべて';
-  allBtn.onclick = () => {
-    selectedPrefectures.clear();
-    renderPrefectureFilter();
-    renderProperties();
-  };
+  allBtn.onclick = () => { selectedPrefectures.clear(); renderPrefectureFilter(); renderProperties(); };
   bar.appendChild(allBtn);
 
-  // One pill per prefecture
-  const prefKeys = sortedPrefectures(groups);
-  prefKeys.forEach(pref => {
+  // Per-prefecture pills
+  sortedPrefectures(groups).forEach(pref => {
     const btn = document.createElement('button');
-    const isActive = selectedPrefectures.has(pref);
-    btn.className = 'pref-pill' + (isActive ? ' active' : '');
+    btn.className = 'pref-pill' + (selectedPrefectures.has(pref) ? ' active' : '');
     btn.innerHTML = `${esc(pref)} <span class="pill-count">${groups.get(pref)}</span>`;
     btn.onclick = () => {
       if (selectedPrefectures.has(pref)) selectedPrefectures.delete(pref);
@@ -624,67 +579,74 @@ function renderPrefectureFilter() {
   });
 }
 
-// ── Render cards ───────────────────────────────────────────────────────────────
-function isNew(dateStr) {
-  return dateStr && (Date.now() - new Date(dateStr).getTime()) < 3 * 24 * 60 * 60 * 1000;
-}
-
+// ── Sync marker visibility ─────────────────────────────────────────────────────
 function syncMarkerVisibility() {
   Object.entries(markerMap).forEach(([id, { marker }]) => {
-    const pref    = prefectureMap.get(id);
-    const visible = selectedPrefectures.size === 0 || (pref && selectedPrefectures.has(pref));
+    const pref   = prefectureMap.get(id);
+    const prefOk = selectedPrefectures.size === 0 || (pref && selectedPrefectures.has(pref));
+    const favOk  = !showFavOnly || favorites.has(id);
+    const visible = prefOk && favOk;
     marker.setMap(visible ? gmap : null);
     if (visible) marker.setIcon(getIcon(id));
   });
 }
 
-function buildCard(p) {
-  const isDis   = dismissed.has(p.id);
-  const sid     = safeId(p.id);
-  const hasGeo  = !!markerMap[p.id];
-  const walk    = p.walkMin ? `徒歩${p.walkMin}分` : (p.busMin ? `バス${p.busMin}分` : '');
-  const dateStr = p.pubDate ? new Date(p.pubDate).toLocaleDateString('ja-JP') : '';
-
-  const card = document.createElement('div');
-  card.className = `card${isDis ? ' dismissed' : ''}`;
-  card.id = sid;
-  card.innerHTML = `
-    <div class="card-header">
-      <button id="pin-${sid}" class="card-map-btn${hasGeo ? '' : ' no-geo'}"
-              title="地図で見る" onclick="focusMarker(${JSON.stringify(p.id)})">📍</button>
-      <div class="card-title-wrap">
-        <div class="card-title"><a href="${p.link}" target="_blank">${esc(p.title)}</a></div>
-        ${dateStr ? `<div class="card-date">${dateStr}</div>` : ''}
-      </div>
-      ${isNew(p.pubDate) ? '<span class="new-badge">NEW</span>' : ''}
-    </div>
-    <div class="card-body">
-      ${p.price ? `<div class="card-price">${esc(p.price)} <small>（税込）</small></div>` : ''}
-      <div class="card-meta">
-        ${p.station    ? `<span class="meta-station">${esc(p.station)}駅</span>` : ''}
-        ${walk         ? `<span class="meta-walk">${esc(walk)}</span>`           : ''}
-        ${p.totalUnits ? `<span class="meta-units">${p.totalUnits}戸</span>`     : ''}
-      </div>
-      <div class="meta-addr" id="addr-${sid}"
-           style="${markerMap[p.id]?.geo?.address ? '' : 'display:none'}">
-        ${markerMap[p.id]?.geo?.address ?? ''}
-      </div>
-    </div>
-    <div class="card-footer">
-      <a class="btn-open" href="${p.link}" target="_blank">物件詳細を見る ↗</a>
-      <button class="btn-dismiss" onclick="toggleDismiss(${JSON.stringify(p.id)})">
-        ${isDis ? '✓ 表示に戻す' : 'スキップ'}
-      </button>
-    </div>
-  `;
-  return card;
+// ── Build table row ────────────────────────────────────────────────────────────
+function isNew(dateStr) {
+  return dateStr && (Date.now() - new Date(dateStr).getTime()) < 3 * 24 * 60 * 60 * 1000;
 }
 
+function buildRow(p) {
+  const isDis  = dismissed.has(p.id);
+  const isFav  = favorites.has(p.id);
+  const sid    = safeId(p.id);
+  const hasGeo = !!markerMap[p.id];
+  const walk   = p.walkMin ? `徒歩${p.walkMin}分` : (p.busMin ? `バス${p.busMin}分` : '—');
+  const dateStr = p.pubDate
+    ? new Date(p.pubDate).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })
+    : '—';
+  const geo  = markerMap[p.id]?.geo;
+  const addr = geo?.resolvedAddress || geo?.address || '';
+
+  const tr = document.createElement('tr');
+  tr.id = sid;
+  if (isDis) tr.classList.add('row-dismissed');
+  if (isFav) tr.classList.add('row-fav');
+
+  tr.innerHTML = `
+    <td class="col-pin">
+      <button id="pin-${sid}" class="pin-btn${hasGeo ? '' : ' no-geo'}"
+              title="地図で見る" onclick="focusMarker(${JSON.stringify(p.id)})">📍</button>
+    </td>
+    <td class="col-title">
+      <div class="row-title">
+        ${isNew(p.pubDate) ? '<span class="new-badge">NEW</span>' : ''}
+        <a href="${p.link}" target="_blank">${esc(p.title)}</a>
+      </div>
+      <div class="row-addr" id="addr-${sid}" ${addr ? '' : 'style="display:none"'}>${addr ? esc(addr) : ''}</div>
+    </td>
+    <td class="col-price">${p.price ? esc(p.price) : '—'}</td>
+    <td class="col-station">${p.station ? esc(p.station) + '駅' : '—'}</td>
+    <td class="col-walk">${walk}</td>
+    <td class="col-units">${p.totalUnits ? p.totalUnits + '戸' : '—'}</td>
+    <td class="col-date">${dateStr}</td>
+    <td class="col-actions">
+      <button class="btn-fav" onclick="toggleFavorite(${JSON.stringify(p.id)})"
+              title="${isFav ? 'お気に入り解除' : 'お気に入りに追加'}">${isFav ? '❤️' : '🤍'}</button>
+      <button class="btn-skip${isDis ? ' active' : ''}" onclick="toggleDismiss(${JSON.stringify(p.id)})">
+        ${isDis ? '再表示' : 'スキップ'}
+      </button>
+      <a class="btn-detail" href="${p.link}" target="_blank">詳細 ↗</a>
+    </td>
+  `;
+  return tr;
+}
+
+// ── Render properties as tables grouped by prefecture ─────────────────────────
 function renderProperties() {
   const container = document.getElementById('property-grid');
   let visible = showDismissed ? allProperties : allProperties.filter(p => !dismissed.has(p.id));
-
-  // Apply prefecture filter
+  if (showFavOnly)              visible = visible.filter(p => favorites.has(p.id));
   if (selectedPrefectures.size > 0) {
     visible = visible.filter(p => {
       const pref = prefectureMap.get(p.id);
@@ -693,14 +655,29 @@ function renderProperties() {
   }
 
   container.innerHTML = '';
-  document.getElementById('empty-state').style.display = visible.length ? 'none' : 'block';
+
+  // Update empty state
+  const emptyEl = document.getElementById('empty-state');
+  if (visible.length === 0) {
+    emptyEl.style.display = 'block';
+    if (showFavOnly) {
+      emptyEl.innerHTML = '<div class="icon">🤍</div><p>まだお気に入りがありません。<br>❤️ を押して追加してください。</p>';
+    } else {
+      emptyEl.innerHTML = '<div class="icon">✅</div><p>すべての物件を確認しました。<br>「スキップ済みを表示」で再表示できます。</p>';
+    }
+  } else {
+    emptyEl.style.display = 'none';
+  }
 
   const skipCnt = allProperties.filter(p => dismissed.has(p.id)).length;
   const actCnt  = allProperties.length - skipCnt;
   document.getElementById('header-count').textContent = `${actCnt} 件`;
   document.getElementById('status-text').innerHTML =
-    `<strong>${actCnt}</strong> 件表示中 ` +
-    (skipCnt ? `<span style="color:var(--grey)">(${skipCnt} 件スキップ)</span>` : '');
+    `<strong>${actCnt}</strong> 件表示中` +
+    (skipCnt ? ` <span style="color:var(--grey)">(${skipCnt} 件スキップ)</span>` : '') +
+    (favorites.size ? ` <span style="color:#f59e0b">/ ❤️ ${favorites.size} 件お気に入り</span>` : '');
+  document.getElementById('btn-show-all').textContent =
+    showDismissed ? '非表示を隠す' : 'スキップ済みを表示';
 
   // Group by prefecture
   const groups = new Map();
@@ -710,47 +687,76 @@ function renderProperties() {
     groups.get(pref).push(p);
   });
 
-  // Unknown-only while geocoding starts → show flat grid without section header clutter
   const prefKeys = sortedPrefectures(groups);
   const onlyUnknown = prefKeys.length === 1 && prefKeys[0] === '不明';
 
   prefKeys.forEach(pref => {
     const props = groups.get(pref);
+
     const section = document.createElement('div');
     section.className = 'pref-section';
 
     if (!onlyUnknown) {
       const hdr = document.createElement('div');
       hdr.className = 'pref-header';
-      hdr.innerHTML = `
-        <span class="pref-name">${esc(pref)}</span>
-        <span class="pref-count">${props.length}件</span>`;
+      hdr.innerHTML = `<span class="pref-name">${esc(pref)}</span><span class="pref-count">${props.length}件</span>`;
       section.appendChild(hdr);
     }
 
-    const grid = document.createElement('div');
-    grid.className = 'pref-grid';
-    props.forEach(p => grid.appendChild(buildCard(p)));
-    section.appendChild(grid);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'table-wrapper';
+
+    const table = document.createElement('table');
+    table.className = 'property-table';
+
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+      <tr>
+        <th></th>
+        <th>物件名</th>
+        <th>価格</th>
+        <th>最寄駅</th>
+        <th class="th-walk">徒歩</th>
+        <th class="th-units th-right">戸数</th>
+        <th class="th-date">登録日</th>
+        <th></th>
+      </tr>`;
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    props.forEach(p => tbody.appendChild(buildRow(p)));
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    section.appendChild(wrapper);
     container.appendChild(section);
   });
 
-  // Sync marker visibility (prefecture filter) and icons (dismissed state)
   syncMarkerVisibility();
 }
 
+// ── Toggle actions ─────────────────────────────────────────────────────────────
 window.toggleDismiss = function (id) {
-  if (dismissed.has(id)) dismissed.delete(id);
-  else dismissed.add(id);
+  if (dismissed.has(id)) dismissed.delete(id); else dismissed.add(id);
   localStorage.setItem('dismissed', JSON.stringify([...dismissed]));
   renderProperties();
   if (markerMap[id]) markerMap[id].marker.setIcon(getIcon(id));
 };
 
+window.toggleFavorite = function (id) {
+  if (favorites.has(id)) favorites.delete(id); else favorites.add(id);
+  localStorage.setItem('favorites', JSON.stringify([...favorites]));
+  renderPrefectureFilter();
+  renderProperties();
+  // Update icon immediately
+  if (markerMap[id]) {
+    markerMap[id].marker.setIcon(getIcon(id));
+    // Refresh open info window if it's for this property
+    infoWindow.setContent(buildInfoContent(markerMap[id].property, markerMap[id].geo));
+  }
+};
+
 window.showAll = function () {
   showDismissed = !showDismissed;
-  document.getElementById('btn-show-all').textContent =
-    showDismissed ? '非表示を隠す' : 'スキップ済みを表示';
   renderProperties();
 };
 
@@ -763,9 +769,9 @@ async function loadProperties() {
   try {
     const data = await fetch(`${API_BASE}/api/properties`).then(r => r.json());
     if (data.error) throw new Error(data.error);
-
     allProperties = data.properties || [];
     document.getElementById('loading-state').style.display = 'none';
+    renderPrefectureFilter();   // show favorites pill immediately
     renderProperties();
     geocodeAll(allProperties);
   } catch (err) {
@@ -783,12 +789,10 @@ window.openSettings = function () {
   document.getElementById('settings-modal').style.display   = 'block';
   document.getElementById('api-url-input').focus();
 };
-
 window.closeSettings = function () {
   document.getElementById('settings-overlay').style.display = 'none';
   document.getElementById('settings-modal').style.display   = 'none';
 };
-
 window.saveSettings = function () {
   const val = document.getElementById('api-url-input').value.trim().replace(/\/$/, '');
   if (val) localStorage.setItem('suumo_api_base', val);
@@ -798,14 +802,12 @@ window.saveSettings = function () {
 window.refreshProperties = function () {
   Object.values(markerMap).forEach(({ marker }) => marker.setMap(null));
   Object.keys(markerMap).forEach(k => delete markerMap[k]);
-  prefectureMap.clear();
-  selectedPrefectures.clear();
-  boundsRef.bounds = null;
+  prefectureMap.clear(); selectedPrefectures.clear(); boundsRef.bounds = null;
   loadProperties();
 };
 </script>
 
-<!-- Google Maps key is fetched from the local backend at runtime — never hardcoded here -->
+<!-- Google Maps key is fetched from the backend at runtime — never hardcoded here -->
 <script>
 (async () => {
   try {
@@ -813,8 +815,7 @@ window.refreshProperties = function () {
     if (!mapsKey) throw new Error('mapsKey missing');
     const s = document.createElement('script');
     s.src = `https://maps.googleapis.com/maps/api/js?key=${mapsKey}&callback=initMap&language=ja&region=JP`;
-    s.async = true;
-    s.defer = true;
+    s.async = true; s.defer = true;
     document.head.appendChild(s);
   } catch (e) {
     console.error('Failed to load Google Maps:', e.message);
