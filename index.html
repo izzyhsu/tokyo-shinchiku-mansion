@@ -354,7 +354,7 @@
 const API_BASE = (() => {
   const stored = localStorage.getItem('suumo_api_base');
   const param  = new URLSearchParams(location.search).get('api');
-  return (param || stored || 'http://localhost:3001').replace(/\/$/, '');
+  return (param || stored || 'https://tokyo-shinchiku-mansion.onrender.com').replace(/\/$/, '');
 })();
 
 // ── State ──────────────────────────────────────────────────────────────────────
