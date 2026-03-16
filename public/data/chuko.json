@@ -1,0 +1,12 @@
+{
+  "updatedAt": "2026-03-16",
+  "properties": [
+    { "title": "プラウドシティ赤羽", "link": "https://suumo.jp/ms/chuko/tokyo/sc_kita/nc_20402221/", "district": "北区", "station": "赤羽", "walkMin": 4, "area": 73.53, "floorInfo": "23/24", "age": 15, "direction": "南", "price": "13,280" },
+    { "title": "シティタワー赤羽テラス", "link": "https://suumo.jp/ms/chuko/tokyo/sc_kita/nc_79189561/", "district": "北区", "station": "赤羽", "walkMin": 10, "area": 71.79, "floorInfo": "11/23", "age": 14, "direction": "北東", "price": "9,280" },
+    { "title": "ザ・パークハウス赤羽 ウエストウイング", "link": "https://suumo.jp/ms/chuko/tokyo/sc_kita/nc_20387571/", "district": "北区", "station": "赤羽", "walkMin": 4, "area": 70.12, "floorInfo": "8/15", "age": 14, "direction": "南", "price": "11,800" },
+    { "title": "アトラスタワー北千住 (24F)", "link": "https://suumo.jp/ms/chuko/tokyo/sc_adachi/nc_78987334/", "district": "足立区", "station": "北千住", "walkMin": 3, "area": 83.23, "floorInfo": "24/26", "age": 22, "direction": "南", "price": "14,500" },
+    { "title": "アトラスタワー北千住 (16F)", "link": "https://suumo.jp/ms/chuko/tokyo/sc_adachi/nc_20427500/", "district": "足立区", "station": "北千住", "walkMin": 3, "area": 76.13, "floorInfo": "16/26", "age": 22, "direction": "西", "price": "13,800" },
+    { "title": "アトラスタワー北千住 (13F)", "link": "https://suumo.jp/ms/chuko/tokyo/sc_adachi/nc_79071360/", "district": "足立区", "station": "北千住", "walkMin": 3, "area": 70.54, "floorInfo": "13/26", "age": 22, "direction": "西", "price": "11,880" },
+    { "title": "アトラス練馬レジデンス", "link": "https://suumo.jp/ms/chuko/tokyo/sc_nerima/nc_79074538/", "district": "練馬区", "station": "練馬", "walkMin": 6, "area": 73.45, "floorInfo": "13/14", "age": 5, "direction": "南", "price": "12,800" }
+  ]
+}
