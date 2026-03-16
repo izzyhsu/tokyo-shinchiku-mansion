@@ -269,7 +269,7 @@
     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
     <polyline points="9 22 9 12 15 12 15 22"/>
   </svg>
-  <h1>Tokyo Shinchiku Mansion <span style="font-size:11px;font-weight:400;opacity:.7;letter-spacing:.3px">v1.0</span></h1>
+  <h1>Tokyo Shinchiku Mansion <span style="font-size:11px;font-weight:400;opacity:.7;letter-spacing:.3px">v1.1</span></h1>
   <span class="header-badge" id="header-count">読込中…</span>
   <button class="btn-show-all" id="btn-show-all" onclick="showAll()">スキップ済みを表示</button>
   <button class="btn-settings" onclick="openSettings()" title="API設定">⚙️</button>
@@ -371,10 +371,9 @@ const prefectureMap      = new Map();  // property id → prefecture string
 const selectedPrefectures = new Set(); // empty = show all
 
 // ── Google Maps globals ────────────────────────────────────────────────────────
-let gmap, infoWindow, geocoder;
-const markerMap    = {};          // id → { marker, geo, property }
-const boundsRef    = { bounds: null };
-const geocodeCache = new Map();   // station key → geo result (session cache)
+let gmap, infoWindow;
+const markerMap = {};          // id → { marker, geo, property }
+const boundsRef = { bounds: null };
 
 // ── Google Maps SVG pin icon ───────────────────────────────────────────────────
 function makeIcon(fill, scale = 1) {
@@ -406,7 +405,6 @@ window.initMap = function () {
     zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
   });
   infoWindow = new google.maps.InfoWindow({ maxWidth: 280 });
-  geocoder   = new google.maps.Geocoder();
   loadProperties();
 };
 
@@ -477,84 +475,18 @@ window.focusMarker = function (id) {
   document.getElementById('map-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
-// ── Client-side geocoding via google.maps.Geocoder ────────────────────────────
-function geocodeQuery(query) {
-  // Return from session cache if available
-  if (geocodeCache.has(query)) return Promise.resolve(geocodeCache.get(query));
-
-  return new Promise(resolve => {
-    geocoder.geocode(
-      { address: query, componentRestrictions: { country: 'JP' } },
-      (results, status) => {
-        if (status === 'OK' && results[0]) {
-          const loc = results[0].geometry.location;
-          const geo = { lat: loc.lat(), lng: loc.lng(), address: results[0].formatted_address };
-          geocodeCache.set(query, geo);
-          resolve(geo);
-        } else {
-          geocodeCache.set(query, null);
-          resolve(null);
-        }
-      }
-    );
-  });
-}
-
-// Places Text Search — same engine as the Google Maps search bar, great for named buildings
-function placesSearch(query) {
-  const cacheKey = `places:${query}`;
-  if (geocodeCache.has(cacheKey)) return Promise.resolve(geocodeCache.get(cacheKey));
-
-  return new Promise(resolve => {
-    const svc = new google.maps.places.PlacesService(gmap);
-    svc.textSearch({ query, region: 'jp' }, (results, status) => {
-      if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
-        const loc = results[0].geometry.location;
-        const geo = {
-          lat: loc.lat(),
-          lng: loc.lng(),
-          address: results[0].formatted_address || results[0].vicinity || results[0].name,
-          source: 'places',
-        };
-        geocodeCache.set(cacheKey, geo);
-        resolve(geo);
-      } else {
-        geocodeCache.set(cacheKey, null);
-        resolve(null);
-      }
-    });
-  });
-}
-
-// 3-level geocoding: scraped address → Places name search → station fallback
+// ── Geocoding — fully server-side with persistent cache ───────────────────────
+// Server handles: address scraping → Places API → Geocoding API → station fallback
+// Results cached in geocache.json — Google APIs only called for new entries.
 async function geocodeProperty(p) {
-  // 1. Scrape actual 所在地 address from the SUUMO detail page (most accurate)
-  if (p.link) {
-    try {
-      const { address } = await fetch(`${API_BASE}/api/address?link=${encodeURIComponent(p.link)}`)
-                            .then(r => r.json());
-      if (address) {
-        const geo = await geocodeQuery(address);
-        if (geo) return { ...geo, resolvedAddress: address, source: 'address' };
-      }
-    } catch {}
-  }
-
-  // 2. Google Places Text Search — finds named buildings precisely
-  if (p.title) {
-    const geo = await placesSearch(p.title)
-             || await placesSearch(`${p.title} ${p.station ? p.station + '駅' : ''}`.trim());
-    if (geo) return geo;
-  }
-
-  // 3. Station name — least precise but always available
-  if (p.station) {
-    const geo = await geocodeQuery(`${p.station}駅`)
-             || (p.line ? await geocodeQuery(`${p.line} ${p.station}駅`) : null);
-    if (geo) return { ...geo, source: 'station' };
-  }
-
-  return null;
+  const params = new URLSearchParams();
+  if (p.link)    params.set('link',    p.link);
+  if (p.title)   params.set('title',   p.title);
+  if (p.station) params.set('station', p.station);
+  if (p.line)    params.set('line',    p.line);
+  try {
+    return await fetch(`${API_BASE}/api/geocode?${params}`).then(r => r.json());
+  } catch { return null; }
 }
 
 async function geocodeAll(properties) {
@@ -880,7 +812,7 @@ window.refreshProperties = function () {
     const { mapsKey } = await fetch(`${API_BASE}/api/config`).then(r => r.json());
     if (!mapsKey) throw new Error('mapsKey missing');
     const s = document.createElement('script');
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${mapsKey}&callback=initMap&language=ja&region=JP&libraries=places`;
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${mapsKey}&callback=initMap&language=ja&region=JP`;
     s.async = true;
     s.defer = true;
     document.head.appendChild(s);
