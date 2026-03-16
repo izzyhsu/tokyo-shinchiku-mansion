@@ -49,11 +49,65 @@ function parseDescription(desc) {
   };
 }
 
+// ── Address scraper ────────────────────────────────────────────────────────────
+// In-memory cache (lost on server restart, but fine for personal use)
+const addressCache = new Map();
+
+async function scrapePropertyAddress(url) {
+  if (addressCache.has(url)) return addressCache.get(url);
+
+  try {
+    const res = await axios.get(url, {
+      headers: {
+        'User-Agent':      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'Accept-Language': 'ja,en;q=0.9',
+        'Referer':         'https://suumo.jp/',
+      },
+      timeout: 10000,
+      responseType: 'text',
+    });
+
+    // Try multiple SUUMO HTML patterns for 所在地
+    const patterns = [
+      /所在地<\/th>\s*<td[^>]*>\s*(?:<[^>]+>)?([^<]{5,})/,
+      /所在地<\/dt>\s*<dd[^>]*>\s*(?:<[^>]+>)?([^<]{5,})/,
+      /"address"\s*[^>]*>([^<]{5,})/,
+      /所在地[^<]*<[^>]+>([^<]{5,})/,
+    ];
+
+    for (const pat of patterns) {
+      const m = res.data.match(pat);
+      if (m) {
+        const addr = m[1].trim().replace(/\s+/g, '').replace(/&amp;/g, '&');
+        // Must look like a Japanese address (contains 都/道/府/県 or 区/市/町/村)
+        if (addr.length >= 5 && /[都道府県区市町村]/.test(addr)) {
+          console.log(`  📍 Scraped address: ${addr}`);
+          addressCache.set(url, addr);
+          return addr;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn(`  ⚠️  Address scrape failed for ${url}: ${err.message}`);
+  }
+
+  addressCache.set(url, null);
+  return null;
+}
+
 // ── Routes ─────────────────────────────────────────────────────────────────────
 
 // Frontend fetches this to get the Maps key at runtime (key never in public HTML)
 app.get('/api/config', (req, res) => {
   res.json({ mapsKey: GOOGLE_MAPS_KEY });
+});
+
+// Scrape the actual 所在地 address from a SUUMO property detail page
+app.get('/api/address', async (req, res) => {
+  const { link } = req.query;
+  if (!link) return res.json({ address: null });
+  const address = await scrapePropertyAddress(link);
+  res.json({ address });
 });
 
 const RSS_BASE    = 'https://suumo.jp/jj/bukken/ichiran/JJ011FC001/?ar=030&bs=010&nf=010001&rssFlg=1';

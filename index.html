@@ -422,7 +422,7 @@ function buildInfoContent(p, geo) {
       <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:5px;line-height:1.45">${esc(p.title)}</div>
       ${meta    ? `<div style="font-size:12px;color:#6b7280;margin-bottom:5px;line-height:1.6">${esc(meta)}</div>` : ''}
       ${p.price ? `<div style="font-size:16px;font-weight:800;color:#e8351a;margin-bottom:6px">${esc(p.price)}</div>` : ''}
-      ${geo.address ? `<div style="font-size:11px;color:#9ca3af;margin-bottom:10px;line-height:1.4">📍 ${esc(geo.address)}</div>` : ''}
+      ${(geo.resolvedAddress || geo.address) ? `<div style="font-size:11px;color:#9ca3af;margin-bottom:10px;line-height:1.4">📍 ${esc(geo.resolvedAddress || geo.address)}</div>` : ''}
       <a href="${p.link}" target="_blank"
          style="display:block;text-align:center;padding:8px 12px;border-radius:7px;
                 font-size:13px;font-weight:600;text-decoration:none;
@@ -500,11 +500,35 @@ function geocodeQuery(query) {
   });
 }
 
+// 3-level geocoding: scraped address → property name → station fallback
 async function geocodeProperty(p) {
-  if (!p.station) return null;
-  // Try station name, then line + station for disambiguation
-  return await geocodeQuery(`${p.station}駅`)
-      || await geocodeQuery(`${p.line ? p.line + ' ' : ''}${p.station}駅`);
+  // 1. Scrape actual 所在地 address from the SUUMO detail page (most accurate)
+  if (p.link) {
+    try {
+      const { address } = await fetch(`${API_BASE}/api/address?link=${encodeURIComponent(p.link)}`)
+                            .then(r => r.json());
+      if (address) {
+        const geo = await geocodeQuery(address);
+        if (geo) return { ...geo, resolvedAddress: address, source: 'address' };
+      }
+    } catch {}
+  }
+
+  // 2. Search by property name — named buildings often exist in Google's database
+  if (p.title) {
+    const geo = await geocodeQuery(`${p.title} ${p.station ? p.station + '駅' : ''}`.trim())
+             || await geocodeQuery(p.title);
+    if (geo) return { ...geo, source: 'name' };
+  }
+
+  // 3. Station name — least precise but always available
+  if (p.station) {
+    const geo = await geocodeQuery(`${p.station}駅`)
+             || (p.line ? await geocodeQuery(`${p.line} ${p.station}駅`) : null);
+    if (geo) return { ...geo, source: 'station' };
+  }
+
+  return null;
 }
 
 async function geocodeAll(properties) {
@@ -513,43 +537,37 @@ async function geocodeAll(properties) {
   statusEl.textContent   = '📍 地図上の位置を取得中…';
 
   let done = 0;
+  let idx  = 0;
+  const CONCURRENCY = 4;
 
-  // Deduplicate by station so we don't geocode the same station twice
-  const stationSeen = new Map();  // stationKey → geo promise
+  async function worker() {
+    while (idx < properties.length) {
+      const p = properties[idx++];
+      const geo = await geocodeProperty(p);
 
-  const tasks = properties.map(async p => {
-    if (!p.station) return;
-    const key = `${p.station}駅`;
+      if (geo?.lat) {
+        addMarker(p, geo);
+        done++;
+        statusEl.textContent = `📍 位置取得中 ${done} / ${properties.length}`;
 
-    // Reuse in-flight promise for duplicate stations
-    if (!stationSeen.has(key)) stationSeen.set(key, geocodeProperty(p));
-    const geo = await stationSeen.get(key);
+        const pref = extractPrefecture(geo.address);
+        if (pref) { prefectureMap.set(p.id, pref); scheduleRender(); renderPrefectureFilter(); }
 
-    if (geo?.lat) {
-      addMarker(p, geo);
-      done++;
-      statusEl.textContent = `📍 位置取得中 ${done} / ${properties.length}`;
-
-      // Store prefecture and re-group cards
-      const pref = extractPrefecture(geo.address);
-      if (pref) {
-        prefectureMap.set(p.id, pref);
-        scheduleRender();
-        renderPrefectureFilter();
+        const addrEl = document.getElementById(`addr-${safeId(p.id)}`);
+        if (addrEl) {
+          addrEl.textContent = geo.resolvedAddress || geo.address || `${p.station}駅付近`;
+          addrEl.style.display = '';
+        }
+        const pinBtn = document.getElementById(`pin-${safeId(p.id)}`);
+        if (pinBtn) pinBtn.classList.remove('no-geo');
       }
-
-      const addrEl = document.getElementById(`addr-${safeId(p.id)}`);
-      if (addrEl) { addrEl.textContent = geo.address || `${p.station}駅付近`; addrEl.style.display = ''; }
-
-      const pinBtn = document.getElementById(`pin-${safeId(p.id)}`);
-      if (pinBtn) pinBtn.classList.remove('no-geo');
     }
-  });
+  }
 
-  await Promise.allSettled(tasks);
+  await Promise.allSettled(Array.from({ length: CONCURRENCY }, worker));
   fitBounds();
   renderPrefectureFilter();
-  renderProperties();  // final render with all prefectures known
+  renderProperties();
   statusEl.textContent = `✅ ${done} 件の位置情報を取得しました`;
   setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
 }
