@@ -500,7 +500,33 @@ function geocodeQuery(query) {
   });
 }
 
-// 3-level geocoding: scraped address → property name → station fallback
+// Places Text Search — same engine as the Google Maps search bar, great for named buildings
+function placesSearch(query) {
+  const cacheKey = `places:${query}`;
+  if (geocodeCache.has(cacheKey)) return Promise.resolve(geocodeCache.get(cacheKey));
+
+  return new Promise(resolve => {
+    const svc = new google.maps.places.PlacesService(gmap);
+    svc.textSearch({ query, region: 'jp' }, (results, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
+        const loc = results[0].geometry.location;
+        const geo = {
+          lat: loc.lat(),
+          lng: loc.lng(),
+          address: results[0].formatted_address || results[0].vicinity || results[0].name,
+          source: 'places',
+        };
+        geocodeCache.set(cacheKey, geo);
+        resolve(geo);
+      } else {
+        geocodeCache.set(cacheKey, null);
+        resolve(null);
+      }
+    });
+  });
+}
+
+// 3-level geocoding: scraped address → Places name search → station fallback
 async function geocodeProperty(p) {
   // 1. Scrape actual 所在地 address from the SUUMO detail page (most accurate)
   if (p.link) {
@@ -514,11 +540,11 @@ async function geocodeProperty(p) {
     } catch {}
   }
 
-  // 2. Search by property name — named buildings often exist in Google's database
+  // 2. Google Places Text Search — finds named buildings precisely
   if (p.title) {
-    const geo = await geocodeQuery(`${p.title} ${p.station ? p.station + '駅' : ''}`.trim())
-             || await geocodeQuery(p.title);
-    if (geo) return { ...geo, source: 'name' };
+    const geo = await placesSearch(p.title)
+             || await placesSearch(`${p.title} ${p.station ? p.station + '駅' : ''}`.trim());
+    if (geo) return geo;
   }
 
   // 3. Station name — least precise but always available
@@ -854,7 +880,7 @@ window.refreshProperties = function () {
     const { mapsKey } = await fetch(`${API_BASE}/api/config`).then(r => r.json());
     if (!mapsKey) throw new Error('mapsKey missing');
     const s = document.createElement('script');
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${mapsKey}&callback=initMap&language=ja&region=JP`;
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${mapsKey}&callback=initMap&language=ja&region=JP&libraries=places`;
     s.async = true;
     s.defer = true;
     document.head.appendChild(s);
