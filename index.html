@@ -823,9 +823,27 @@ window.refreshProperties = function () {
 };
 </script>
 
-<!-- Google Maps JS API — loads after app script, calls initMap when ready -->
-<script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAOpvWGt9_O1xtbJeFG9KbbF96KR3UFugA&callback=initMap&language=ja&region=JP">
+<!-- Google Maps key is fetched from the local backend at runtime — never hardcoded here -->
+<script>
+(async () => {
+  try {
+    const { mapsKey } = await fetch(`${API_BASE}/api/config`).then(r => r.json());
+    if (!mapsKey) throw new Error('mapsKey missing');
+    const s = document.createElement('script');
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${mapsKey}&callback=initMap&language=ja&region=JP`;
+    s.async = true;
+    s.defer = true;
+    document.head.appendChild(s);
+  } catch (e) {
+    console.error('Failed to load Google Maps:', e.message);
+    document.getElementById('map').innerHTML =
+      `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6b7280;font-size:14px;flex-direction:column;gap:8px">
+        <span style="font-size:32px">🗺️</span>
+        <span>バックエンドサーバーが起動していません</span>
+        <span style="font-size:12px">node server.js を実行後、⚙️ から設定してください</span>
+      </div>`;
+  }
+})();
 </script>
 
 </body>
