@@ -350,11 +350,17 @@
 <!-- ── App script ───────────────────────────────────────────────────────────── -->
 <script>
 // ── API base URL (configurable for GitHub Pages use) ──────────────────────────
-// Priority: localStorage → ?api= URL param → localhost default
+// Priority: ?api= URL param → localStorage (ignored if stored localhost but page is remote) → Render default
 const API_BASE = (() => {
-  const stored = localStorage.getItem('suumo_api_base');
-  const param  = new URLSearchParams(location.search).get('api');
-  return (param || stored || 'https://tokyo-shinchiku-mansion.onrender.com').replace(/\/$/, '');
+  const param   = new URLSearchParams(location.search).get('api');
+  const stored  = localStorage.getItem('suumo_api_base');
+  const isRemote = !location.hostname.match(/^(localhost|127\.|192\.168\.|10\.|172\.)/);
+
+  // Discard a stored localhost URL when the page is accessed remotely
+  const effective = (stored && !(isRemote && stored.match(/^http:\/\/(localhost|127\.)/)))
+    ? stored : null;
+
+  return (param || effective || 'https://tokyo-shinchiku-mansion.onrender.com').replace(/\/$/, '');
 })();
 
 // ── State ──────────────────────────────────────────────────────────────────────
