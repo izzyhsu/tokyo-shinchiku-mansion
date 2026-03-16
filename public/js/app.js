@@ -48,8 +48,10 @@ async function fetchJson(url) {
   return body;
 }
 
+const CHUKO_DATA_URL = new URL('../data/chuko.json', import.meta.url);
+
 async function loadChukoData() {
-  const data = await fetchJson('/data/chuko.json');
+  const data = await fetchJson(CHUKO_DATA_URL);
   state.chukoUpdatedAt = data.updatedAt || '—';
   state.chukoData = (data.properties || []).map((p, i) => ({
     ...p,
