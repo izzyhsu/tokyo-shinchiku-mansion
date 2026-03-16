@@ -67,7 +67,6 @@
     /* ── Main content ────────────────────────────────────────────────────────── */
     main { max-width: 1200px; margin: 0 auto; padding: 20px 20px 60px; }
 
-    /* status bar */
     #status-bar {
       display: flex; align-items: center; gap: 8px;
       margin-bottom: 14px; font-size: 13px; color: var(--grey);
@@ -92,7 +91,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── Filter bar ──────────────────────────────────────────────────────────── */
-    #filter-bar { margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; }
+    #filter-bar { margin-bottom: 20px; }
     #pref-filter { display: flex; flex-wrap: wrap; gap: 8px; }
 
     .pref-pill {
@@ -105,7 +104,6 @@
     .pref-pill.active { background: var(--red); border-color: var(--red); color: #fff; }
     .pref-pill.active .pill-count { color: rgba(255,255,255,.8); }
     .pill-count { font-size: 11px; color: #9ca3af; }
-
     .filter-divider { width: 1px; background: var(--border); align-self: stretch; margin: 2px 0; }
 
     /* ── Prefecture sections ─────────────────────────────────────────────────── */
@@ -136,28 +134,34 @@
       text-align: left; font-size: 11px; font-weight: 600;
       color: var(--grey); text-transform: uppercase;
       letter-spacing: .5px; white-space: nowrap;
+      user-select: none;
     }
-    .property-table thead th.th-right { text-align: right; }
+    /* Sortable column headers */
+    .th-sort {
+      cursor: pointer; transition: color .12s;
+    }
+    .th-sort:hover { color: #374151; }
+    .th-sort.sorted { color: var(--red); }
+    .sort-indicator { margin-left: 4px; font-size: 10px; opacity: .8; }
+
     .property-table tbody tr {
       border-bottom: 1px solid #f3f4f6;
       transition: background .12s;
     }
     .property-table tbody tr:last-child { border-bottom: none; }
     .property-table tbody tr:hover { background: #fef9f9; }
-    .property-table tbody tr.row-dismissed { opacity: .42; filter: grayscale(.5); }
     .property-table tbody tr.row-fav { background: #fff8f8; }
     .property-table tbody tr.row-fav td.col-pin { box-shadow: inset 3px 0 0 var(--red); }
     .property-table td { padding: 10px 12px; vertical-align: middle; }
 
-    /* Column specifics */
-    .col-pin { width: 40px; padding: 8px 6px; text-align: center; }
-    .col-title { min-width: 200px; }
-    .col-price { white-space: nowrap; font-weight: 700; color: var(--red); font-size: 14px; min-width: 100px; }
+    /* Column widths */
+    .col-pin     { width: 40px; padding: 8px 6px; text-align: center; }
+    .col-title   { min-width: 220px; }
     .col-station { white-space: nowrap; min-width: 90px; }
-    .col-walk { white-space: nowrap; min-width: 70px; color: var(--grey); }
-    .col-units { white-space: nowrap; text-align: right; color: var(--grey); }
-    .col-date { white-space: nowrap; color: #9ca3af; font-size: 12px; }
-    .col-actions { white-space: nowrap; text-align: right; min-width: 120px; }
+    .col-walk    { white-space: nowrap; min-width: 70px; color: var(--grey); }
+    .col-units   { white-space: nowrap; text-align: right; color: var(--grey); }
+    .col-date    { white-space: nowrap; color: #9ca3af; font-size: 12px; }
+    .col-actions { white-space: nowrap; text-align: right; min-width: 100px; }
 
     .row-title { font-weight: 600; font-size: 13px; color: #111; line-height: 1.4; }
     .row-title a { color: inherit; text-decoration: none; }
@@ -170,7 +174,7 @@
       padding: 1px 5px; border-radius: 3px; vertical-align: middle; margin-right: 3px;
     }
 
-    /* Pin button in table */
+    /* Pin button */
     .pin-btn {
       width: 30px; height: 30px;
       background: #fef2f2; border: none; border-radius: 6px;
@@ -188,14 +192,6 @@
       transition: transform .15s; vertical-align: middle; line-height: 1;
     }
     .btn-fav:hover { transform: scale(1.25); }
-    .btn-skip {
-      font-size: 11px; padding: 4px 8px; border-radius: 5px;
-      border: 1px solid var(--border); background: #f9fafb;
-      color: var(--grey); cursor: pointer;
-      transition: border-color .15s, color .15s; vertical-align: middle;
-    }
-    .btn-skip:hover { border-color: #d1d5db; color: #374151; }
-    .btn-skip.active { background: #fff0ee; border-color: #fca5a5; color: var(--red); }
     .btn-detail {
       font-size: 11px; padding: 4px 9px; border-radius: 5px;
       border: none; background: var(--red); color: #fff;
@@ -228,12 +224,10 @@
       #map-legend { font-size: 11px; padding: 5px 12px; gap: 10px; }
       main { padding: 14px 12px 60px; }
       #status-bar { font-size: 12px; flex-wrap: wrap; }
-      /* Hide less-important columns on mobile */
       .col-units, .col-date, .col-walk { display: none; }
       .property-table thead th.th-units,
       .property-table thead th.th-date,
       .property-table thead th.th-walk { display: none; }
-      .col-price { font-size: 13px; }
       .col-actions { min-width: unset; }
     }
   </style>
@@ -247,7 +241,7 @@
     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
     <polyline points="9 22 9 12 15 12 15 22"/>
   </svg>
-  <h1>Tokyo Shinchiku Mansion <span style="font-size:11px;font-weight:400;opacity:.7;letter-spacing:.3px">v0.0.2</span></h1>
+  <h1>Tokyo Shinchiku Mansion <span style="font-size:11px;font-weight:400;opacity:.7;letter-spacing:.3px">v0.0.3</span></h1>
   <span class="header-badge" id="header-count">読込中…</span>
   <button class="btn-settings" onclick="openSettings()" title="API設定">⚙️</button>
 </header>
@@ -282,13 +276,10 @@
   <div id="map"></div>
   <div id="map-legend">
     <div class="legend-item">
-      <span class="legend-dot" style="background:#e8351a"></span>気になる物件
+      <span class="legend-dot" style="background:#e8351a"></span>物件
     </div>
     <div class="legend-item">
       <span class="legend-dot" style="background:#f59e0b"></span>お気に入り
-    </div>
-    <div class="legend-item">
-      <span class="legend-dot" style="background:#9ca3af"></span>スキップ済み
     </div>
   </div>
   <div id="geocode-status"></div>
@@ -299,7 +290,6 @@
   <div id="status-bar">
     <span id="status-text">読み込み中…</span>
     <span class="spacer"></span>
-    <button id="btn-show-all" onclick="showAll()">スキップ済みを表示</button>
     <button onclick="refreshProperties()">↻ 更新</button>
   </div>
 
@@ -322,8 +312,8 @@
 
   <div id="property-grid"></div>
   <div id="empty-state">
-    <div class="icon">✅</div>
-    <p>すべての物件を確認しました。<br>「スキップ済みを表示」で再表示できます。</p>
+    <div class="icon">🤍</div>
+    <p>まだお気に入りがありません。<br>❤️ を押して追加してください。</p>
   </div>
 </main>
 
@@ -331,8 +321,8 @@
 <script>
 // ── API base URL ───────────────────────────────────────────────────────────────
 const API_BASE = (() => {
-  const param   = new URLSearchParams(location.search).get('api');
-  const stored  = localStorage.getItem('suumo_api_base');
+  const param    = new URLSearchParams(location.search).get('api');
+  const stored   = localStorage.getItem('suumo_api_base');
   const isRemote = !location.hostname.match(/^(localhost|127\.|192\.168\.|10\.|172\.)/);
   const effective = (stored && !(isRemote && stored.match(/^http:\/\/(localhost|127\.)/)))
     ? stored : null;
@@ -341,17 +331,18 @@ const API_BASE = (() => {
 
 // ── State ──────────────────────────────────────────────────────────────────────
 let allProperties  = [];
-let dismissed      = new Set(JSON.parse(localStorage.getItem('dismissed') || '[]'));
 let favorites      = new Set(JSON.parse(localStorage.getItem('favorites') || '[]'));
-let showDismissed  = false;
 let showFavOnly    = false;
+let sortKey        = 'date';   // default: newest first
+let sortDir        = -1;       // -1 = desc
+
 const prefectureMap       = new Map();
 const selectedPrefectures = new Set();
 
 // ── Google Maps globals ────────────────────────────────────────────────────────
 let gmap, infoWindow;
-const markerMap  = {};
-const boundsRef  = { bounds: null };
+const markerMap = {};
+const boundsRef = { bounds: null };
 
 // ── Marker icons ───────────────────────────────────────────────────────────────
 function makeIcon(fill, scale = 1) {
@@ -368,9 +359,7 @@ function makeIcon(fill, scale = 1) {
   };
 }
 function getIcon(id) {
-  if (dismissed.has(id)) return makeIcon('#9ca3af', .8);
-  if (favorites.has(id)) return makeIcon('#f59e0b');
-  return makeIcon('#e8351a');
+  return favorites.has(id) ? makeIcon('#f59e0b') : makeIcon('#e8351a');
 }
 
 // ── Map init ───────────────────────────────────────────────────────────────────
@@ -393,8 +382,7 @@ function buildInfoContent(p, geo) {
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-width:210px;max-width:260px">
       <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:5px;line-height:1.45">${esc(p.title)}</div>
-      ${meta    ? `<div style="font-size:12px;color:#6b7280;margin-bottom:5px;line-height:1.6">${esc(meta)}</div>` : ''}
-      ${p.price ? `<div style="font-size:16px;font-weight:800;color:#e8351a;margin-bottom:6px">${esc(p.price)}</div>` : ''}
+      ${meta ? `<div style="font-size:12px;color:#6b7280;margin-bottom:5px;line-height:1.6">${esc(meta)}</div>` : ''}
       ${(geo.resolvedAddress || geo.address) ? `<div style="font-size:11px;color:#9ca3af;margin-bottom:10px;line-height:1.4">📍 ${esc(geo.resolvedAddress || geo.address)}</div>` : ''}
       <div style="display:flex;gap:8px;align-items:center">
         <button onclick="toggleFavorite(${JSON.stringify(p.id)})"
@@ -444,7 +432,7 @@ window.focusMarker = function (id) {
   document.getElementById('map-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
-// ── Geocoding — server-side with persistent cache ─────────────────────────────
+// ── Geocoding ─────────────────────────────────────────────────────────────────
 async function geocodeProperty(p) {
   const params = new URLSearchParams();
   if (p.link)    params.set('link',    p.link);
@@ -475,7 +463,6 @@ async function geocodeAll(properties) {
         const pref = extractPrefecture(geo.address);
         if (pref) { prefectureMap.set(p.id, pref); scheduleRender(); renderPrefectureFilter(); }
 
-        // Update address cell in the table row
         const addrEl = document.getElementById(`addr-${safeId(p.id)}`);
         if (addrEl) {
           addrEl.textContent = geo.resolvedAddress || geo.address || `${p.station}駅付近`;
@@ -515,6 +502,50 @@ function sortedPrefectures(groups) {
   });
 }
 
+// ── Sorting ────────────────────────────────────────────────────────────────────
+window.setSort = function (key) {
+  if (sortKey === key) sortDir *= -1;
+  else { sortKey = key; sortDir = key === 'date' ? -1 : 1; }
+  renderProperties();
+};
+
+function sortProps(props) {
+  return [...props].sort((a, b) => {
+    let va, vb;
+    switch (sortKey) {
+      case 'title':
+        va = a.title || ''; vb = b.title || '';
+        return sortDir * va.localeCompare(vb, 'ja');
+      case 'station':
+        va = a.station || ''; vb = b.station || '';
+        return sortDir * va.localeCompare(vb, 'ja');
+      case 'walk':
+        va = a.walkMin || a.busMin || 999; vb = b.walkMin || b.busMin || 999;
+        return sortDir * (va - vb);
+      case 'units':
+        va = a.totalUnits || 0; vb = b.totalUnits || 0;
+        return sortDir * (va - vb);
+      case 'date':
+        va = a.pubDate ? new Date(a.pubDate).getTime() : 0;
+        vb = b.pubDate ? new Date(b.pubDate).getTime() : 0;
+        return sortDir * (va - vb);
+      default:
+        return 0;
+    }
+  });
+}
+
+// Build a sortable <th> element
+function thSort(key, label, extraClass = '') {
+  const active   = sortKey === key;
+  const indicator = active ? (sortDir === 1 ? '↑' : '↓') : '';
+  const th = document.createElement('th');
+  th.className = `th-sort${active ? ' sorted' : ''}${extraClass ? ' ' + extraClass : ''}`;
+  th.innerHTML = `${label}${indicator ? ` <span class="sort-indicator">${indicator}</span>` : ''}`;
+  th.onclick   = () => setSort(key);
+  return th;
+}
+
 // ── DOM helpers ────────────────────────────────────────────────────────────────
 function safeId(id) { return id.replace(/[^a-zA-Z0-9_-]/g, '_'); }
 function esc(s) {
@@ -530,7 +561,7 @@ function scheduleRender() {
 
 // ── Filter bar ─────────────────────────────────────────────────────────────────
 function renderPrefectureFilter() {
-  const bar = document.getElementById('pref-filter');
+  const bar       = document.getElementById('pref-filter');
   const filterBar = document.getElementById('filter-bar');
   if (!bar) return;
 
@@ -543,7 +574,7 @@ function renderPrefectureFilter() {
   filterBar.style.display = 'block';
   bar.innerHTML = '';
 
-  // ❤️ Favorites pill — always first
+  // ❤️ Favorites pill
   const favBtn = document.createElement('button');
   favBtn.className = 'pref-pill' + (showFavOnly ? ' active' : '');
   favBtn.innerHTML = `❤️ お気に入り <span class="pill-count">${favorites.size}</span>`;
@@ -552,10 +583,9 @@ function renderPrefectureFilter() {
 
   if (groups.size === 0) return;
 
-  // Divider
-  const div = document.createElement('span');
-  div.className = 'filter-divider';
-  bar.appendChild(div);
+  const divider = document.createElement('span');
+  divider.className = 'filter-divider';
+  bar.appendChild(divider);
 
   // "すべて" pill
   const allBtn = document.createElement('button');
@@ -564,7 +594,6 @@ function renderPrefectureFilter() {
   allBtn.onclick = () => { selectedPrefectures.clear(); renderPrefectureFilter(); renderProperties(); };
   bar.appendChild(allBtn);
 
-  // Per-prefecture pills
   sortedPrefectures(groups).forEach(pref => {
     const btn = document.createElement('button');
     btn.className = 'pref-pill' + (selectedPrefectures.has(pref) ? ' active' : '');
@@ -582,9 +611,9 @@ function renderPrefectureFilter() {
 // ── Sync marker visibility ─────────────────────────────────────────────────────
 function syncMarkerVisibility() {
   Object.entries(markerMap).forEach(([id, { marker }]) => {
-    const pref   = prefectureMap.get(id);
-    const prefOk = selectedPrefectures.size === 0 || (pref && selectedPrefectures.has(pref));
-    const favOk  = !showFavOnly || favorites.has(id);
+    const pref    = prefectureMap.get(id);
+    const prefOk  = selectedPrefectures.size === 0 || (pref && selectedPrefectures.has(pref));
+    const favOk   = !showFavOnly || favorites.has(id);
     const visible = prefOk && favOk;
     marker.setMap(visible ? gmap : null);
     if (visible) marker.setIcon(getIcon(id));
@@ -597,7 +626,6 @@ function isNew(dateStr) {
 }
 
 function buildRow(p) {
-  const isDis  = dismissed.has(p.id);
   const isFav  = favorites.has(p.id);
   const sid    = safeId(p.id);
   const hasGeo = !!markerMap[p.id];
@@ -610,7 +638,6 @@ function buildRow(p) {
 
   const tr = document.createElement('tr');
   tr.id = sid;
-  if (isDis) tr.classList.add('row-dismissed');
   if (isFav) tr.classList.add('row-fav');
 
   tr.innerHTML = `
@@ -625,7 +652,6 @@ function buildRow(p) {
       </div>
       <div class="row-addr" id="addr-${sid}" ${addr ? '' : 'style="display:none"'}>${addr ? esc(addr) : ''}</div>
     </td>
-    <td class="col-price">${p.price ? esc(p.price) : '—'}</td>
     <td class="col-station">${p.station ? esc(p.station) + '駅' : '—'}</td>
     <td class="col-walk">${walk}</td>
     <td class="col-units">${p.totalUnits ? p.totalUnits + '戸' : '—'}</td>
@@ -633,20 +659,18 @@ function buildRow(p) {
     <td class="col-actions">
       <button class="btn-fav" onclick="toggleFavorite(${JSON.stringify(p.id)})"
               title="${isFav ? 'お気に入り解除' : 'お気に入りに追加'}">${isFav ? '❤️' : '🤍'}</button>
-      <button class="btn-skip${isDis ? ' active' : ''}" onclick="toggleDismiss(${JSON.stringify(p.id)})">
-        ${isDis ? '再表示' : 'スキップ'}
-      </button>
       <a class="btn-detail" href="${p.link}" target="_blank">詳細 ↗</a>
     </td>
   `;
   return tr;
 }
 
-// ── Render properties as tables grouped by prefecture ─────────────────────────
+// ── Render ─────────────────────────────────────────────────────────────────────
 function renderProperties() {
   const container = document.getElementById('property-grid');
-  let visible = showDismissed ? allProperties : allProperties.filter(p => !dismissed.has(p.id));
-  if (showFavOnly)              visible = visible.filter(p => favorites.has(p.id));
+
+  let visible = [...allProperties];
+  if (showFavOnly) visible = visible.filter(p => favorites.has(p.id));
   if (selectedPrefectures.size > 0) {
     visible = visible.filter(p => {
       const pref = prefectureMap.get(p.id);
@@ -656,28 +680,20 @@ function renderProperties() {
 
   container.innerHTML = '';
 
-  // Update empty state
   const emptyEl = document.getElementById('empty-state');
   if (visible.length === 0) {
     emptyEl.style.display = 'block';
-    if (showFavOnly) {
-      emptyEl.innerHTML = '<div class="icon">🤍</div><p>まだお気に入りがありません。<br>❤️ を押して追加してください。</p>';
-    } else {
-      emptyEl.innerHTML = '<div class="icon">✅</div><p>すべての物件を確認しました。<br>「スキップ済みを表示」で再表示できます。</p>';
-    }
+    emptyEl.innerHTML = showFavOnly
+      ? '<div class="icon">🤍</div><p>まだお気に入りがありません。<br>❤️ を押して追加してください。</p>'
+      : '<div class="icon">📭</div><p>表示できる物件がありません。</p>';
   } else {
     emptyEl.style.display = 'none';
   }
 
-  const skipCnt = allProperties.filter(p => dismissed.has(p.id)).length;
-  const actCnt  = allProperties.length - skipCnt;
-  document.getElementById('header-count').textContent = `${actCnt} 件`;
+  document.getElementById('header-count').textContent = `${allProperties.length} 件`;
   document.getElementById('status-text').innerHTML =
-    `<strong>${actCnt}</strong> 件表示中` +
-    (skipCnt ? ` <span style="color:var(--grey)">(${skipCnt} 件スキップ)</span>` : '') +
+    `<strong>${allProperties.length}</strong> 件` +
     (favorites.size ? ` <span style="color:#f59e0b">/ ❤️ ${favorites.size} 件お気に入り</span>` : '');
-  document.getElementById('btn-show-all').textContent =
-    showDismissed ? '非表示を隠す' : 'スキップ済みを表示';
 
   // Group by prefecture
   const groups = new Map();
@@ -687,11 +703,11 @@ function renderProperties() {
     groups.get(pref).push(p);
   });
 
-  const prefKeys = sortedPrefectures(groups);
+  const prefKeys    = sortedPrefectures(groups);
   const onlyUnknown = prefKeys.length === 1 && prefKeys[0] === '不明';
 
   prefKeys.forEach(pref => {
-    const props = groups.get(pref);
+    const props = sortProps(groups.get(pref));
 
     const section = document.createElement('div');
     section.className = 'pref-section';
@@ -709,18 +725,19 @@ function renderProperties() {
     const table = document.createElement('table');
     table.className = 'property-table';
 
+    // Build thead with sortable headers
     const thead = document.createElement('thead');
-    thead.innerHTML = `
-      <tr>
-        <th></th>
-        <th>物件名</th>
-        <th>価格</th>
-        <th>最寄駅</th>
-        <th class="th-walk">徒歩</th>
-        <th class="th-units th-right">戸数</th>
-        <th class="th-date">登録日</th>
-        <th></th>
-      </tr>`;
+    const headerRow = document.createElement('tr');
+    const pinTh = document.createElement('th');
+    headerRow.appendChild(pinTh);
+    headerRow.appendChild(thSort('title',   '物件名'));
+    headerRow.appendChild(thSort('station', '最寄駅'));
+    headerRow.appendChild(thSort('walk',    '徒歩', 'th-walk'));
+    headerRow.appendChild(thSort('units',   '戸数', 'th-units'));
+    headerRow.appendChild(thSort('date',    '登録日', 'th-date'));
+    const actionTh = document.createElement('th');
+    headerRow.appendChild(actionTh);
+    thead.appendChild(headerRow);
     table.appendChild(thead);
 
     const tbody = document.createElement('tbody');
@@ -734,30 +751,16 @@ function renderProperties() {
   syncMarkerVisibility();
 }
 
-// ── Toggle actions ─────────────────────────────────────────────────────────────
-window.toggleDismiss = function (id) {
-  if (dismissed.has(id)) dismissed.delete(id); else dismissed.add(id);
-  localStorage.setItem('dismissed', JSON.stringify([...dismissed]));
-  renderProperties();
-  if (markerMap[id]) markerMap[id].marker.setIcon(getIcon(id));
-};
-
+// ── Favorites ──────────────────────────────────────────────────────────────────
 window.toggleFavorite = function (id) {
   if (favorites.has(id)) favorites.delete(id); else favorites.add(id);
   localStorage.setItem('favorites', JSON.stringify([...favorites]));
   renderPrefectureFilter();
   renderProperties();
-  // Update icon immediately
   if (markerMap[id]) {
     markerMap[id].marker.setIcon(getIcon(id));
-    // Refresh open info window if it's for this property
     infoWindow.setContent(buildInfoContent(markerMap[id].property, markerMap[id].geo));
   }
-};
-
-window.showAll = function () {
-  showDismissed = !showDismissed;
-  renderProperties();
 };
 
 // ── Load & refresh ─────────────────────────────────────────────────────────────
@@ -771,7 +774,7 @@ async function loadProperties() {
     if (data.error) throw new Error(data.error);
     allProperties = data.properties || [];
     document.getElementById('loading-state').style.display = 'none';
-    renderPrefectureFilter();   // show favorites pill immediately
+    renderPrefectureFilter();
     renderProperties();
     geocodeAll(allProperties);
   } catch (err) {
@@ -807,7 +810,7 @@ window.refreshProperties = function () {
 };
 </script>
 
-<!-- Google Maps key is fetched from the backend at runtime — never hardcoded here -->
+<!-- Google Maps key fetched from backend at runtime — never hardcoded here -->
 <script>
 (async () => {
   try {
