@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SUUMO House Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:    #e8351a;
+      --red-dk: #c52c14;
+      --grey:   #6b7280;
+      --bg:     #f5f5f5;
+      --white:  #ffffff;
+      --border: #e5e7eb;
+      --shadow: 0 1px 4px rgba(0,0,0,.10);
+      --radius: 10px;
+    }
+
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           background: var(--bg); color: #111; }
+
+    /* ── Header ─────────────────────────────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 1000;
+      background: var(--red);
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 20px; height: 52px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    header h1 { color: #fff; font-size: 18px; font-weight: 700; letter-spacing: .4px; }
+    .header-badge {
+      margin-left: auto; background: rgba(255,255,255,.2);
+      color: #fff; font-size: 12px; padding: 3px 10px; border-radius: 20px;
+    }
+    .btn-show-all {
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.4);
+      color: #fff; font-size: 12px; padding: 4px 12px; border-radius: 20px;
+      cursor: pointer; transition: background .15s;
+    }
+    .btn-show-all:hover { background: rgba(255,255,255,.3); }
+
+    /* ── Map ─────────────────────────────────────────────────────────────────── */
+    #map-section {
+      position: relative;
+      width: 100%;
+      height: 56vh;
+      min-height: 400px;
+    }
+    #map { width: 100%; height: 100%; }
+
+    /* legend pill */
+    #map-legend {
+      position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+      z-index: 5;
+      display: flex; gap: 14px; align-items: center;
+      background: rgba(255,255,255,.93); border-radius: 24px;
+      padding: 6px 16px; font-size: 12px; color: #444;
+      box-shadow: 0 2px 8px rgba(0,0,0,.18);
+      pointer-events: none; white-space: nowrap;
+    }
+    .legend-dot {
+      width: 11px; height: 11px; border-radius: 50%; display: inline-block;
+      box-shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+
+    /* geocode progress */
+    #geocode-status {
+      position: absolute; bottom: 10px; left: 10px; z-index: 5;
+      background: rgba(255,255,255,.93); border-radius: 8px;
+      padding: 5px 12px; font-size: 11px; color: #555;
+      box-shadow: var(--shadow); display: none;
+    }
+
+
+    /* ── Main content ────────────────────────────────────────────────────────── */
+    main { max-width: 1200px; margin: 0 auto; padding: 20px 20px 60px; }
+
+    /* status bar */
+    #status-bar {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px; font-size: 13px; color: var(--grey);
+    }
+    #status-bar strong { color: #111; }
+    #status-bar .spacer { flex: 1; }
+    #status-bar button {
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      padding: 5px 12px; font-size: 12px; cursor: pointer; color: var(--grey);
+      transition: border-color .15s, color .15s;
+    }
+    #status-bar button:hover { border-color: var(--red); color: var(--red); }
+
+    /* loading / error */
+    #loading-state, #error-state {
+      text-align: center; padding: 60px 20px; color: var(--grey);
+    }
+    #error-state { color: var(--red); }
+    .spinner {
+      width: 36px; height: 36px; border: 3px solid #e5e7eb;
+      border-top-color: var(--red); border-radius: 50%;
+      animation: spin .7s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Prefecture filter bar ───────────────────────────────────────────────── */
+    #pref-filter {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 20px;
+    }
+    .pref-pill {
+      padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
+      border: 1.5px solid var(--border); background: var(--white); color: var(--grey);
+      cursor: pointer; transition: border-color .15s, background .15s, color .15s;
+      display: flex; align-items: center; gap: 5px; white-space: nowrap;
+    }
+    .pref-pill:hover { border-color: var(--red); color: var(--red); }
+    .pref-pill.active {
+      background: var(--red); border-color: var(--red); color: #fff;
+    }
+    .pref-pill.active .pill-count { color: rgba(255,255,255,.8); }
+    .pill-count { font-size: 11px; color: #9ca3af; }
+
+    /* ── Prefecture sections ─────────────────────────────────────────────────── */
+    .pref-section { margin-bottom: 32px; }
+
+    .pref-header {
+      display: flex; align-items: baseline; gap: 10px;
+      margin-bottom: 14px; padding-bottom: 10px;
+      border-bottom: 2.5px solid var(--red);
+    }
+    .pref-name  { font-size: 17px; font-weight: 800; color: #111; }
+    .pref-count { font-size: 13px; color: var(--grey); }
+
+    .pref-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    /* property grid (legacy, kept for safety) */
+    #property-grid {}
+
+    /* ── Card ────────────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--white); border-radius: var(--radius);
+      box-shadow: var(--shadow); overflow: hidden;
+      transition: box-shadow .2s, transform .2s;
+      border: 2px solid transparent;
+    }
+    .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.13); transform: translateY(-2px); }
+    .card.highlighted {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(232,53,26,.15), 0 4px 16px rgba(0,0,0,.14);
+    }
+    .card.dismissed { opacity: .42; filter: grayscale(.55); }
+
+    .card-header {
+      padding: 14px 14px 8px;
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .card-map-btn {
+      flex-shrink: 0; width: 32px; height: 32px;
+      background: #fef2f2; border: none; border-radius: 7px;
+      cursor: pointer; font-size: 16px; display: flex; align-items: center;
+      justify-content: center; transition: background .15s;
+    }
+    .card-map-btn:hover { background: #fee2e2; }
+    .card-map-btn.no-geo { opacity: .25; cursor: default; pointer-events: none; }
+
+    .card-title-wrap { flex: 1; }
+    .card-title {
+      font-size: 13.5px; font-weight: 700; line-height: 1.4; color: #111;
+    }
+    .card-title a { color: inherit; text-decoration: none; }
+    .card-title a:hover { color: var(--red); }
+    .card-date { font-size: 11px; color: #9ca3af; margin-top: 3px; }
+
+    .new-badge {
+      flex-shrink: 0;
+      background: var(--red); color: #fff; font-size: 10px;
+      padding: 2px 7px; border-radius: 4px; align-self: flex-start;
+    }
+
+    .card-body { padding: 0 14px 10px; }
+    .card-price {
+      font-size: 18px; font-weight: 800; color: var(--red); margin-bottom: 8px;
+    }
+    .card-price small { font-size: 12px; font-weight: 400; color: var(--grey); }
+
+    .card-meta {
+      display: flex; flex-wrap: wrap; gap: 4px 10px;
+      font-size: 12px; color: var(--grey); margin-bottom: 6px;
+    }
+    .meta-station::before { content: "🚉 "; }
+    .meta-walk::before    { content: "🚶 "; }
+    .meta-units::before   { content: "🏢 "; }
+    .meta-addr { font-size: 11px; color: #9ca3af; display: none; }
+    .meta-addr::before { content: "📍 "; }
+
+    .card-footer { display: flex; gap: 8px; padding: 0 14px 14px; }
+    .btn-open {
+      flex: 1; text-align: center; background: var(--red); color: #fff;
+      border: none; border-radius: 6px; padding: 8px 0; font-size: 12px;
+      font-weight: 600; cursor: pointer; text-decoration: none;
+      transition: background .15s;
+    }
+    .btn-open:hover { background: var(--red-dk); }
+    .btn-dismiss {
+      background: #f9fafb; border: 1px solid var(--border); color: var(--grey);
+      border-radius: 6px; padding: 8px 12px; font-size: 12px;
+      cursor: pointer; transition: border-color .15s, color .15s;
+    }
+    .btn-dismiss:hover { border-color: #d1d5db; color: #374151; }
+    .card.dismissed .btn-dismiss { background: #fff0ee; border-color: #fca5a5; color: var(--red); }
+
+    /* empty state */
+    #empty-state { display: none; text-align: center; padding: 60px 20px; color: var(--grey); }
+    #empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+    /* ── Settings ────────────────────────────────────────────────────────────── */
+    .btn-settings {
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.4);
+      color: #fff; font-size: 15px; width: 32px; height: 32px;
+      border-radius: 50%; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; transition: background .15s; flex-shrink: 0;
+    }
+    .btn-settings:hover { background: rgba(255,255,255,.3); }
+
+    #settings-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.4);
+      z-index: 2000; backdrop-filter: blur(2px);
+    }
+    #settings-modal {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      z-index: 2001; background: #fff; border-radius: 14px;
+      padding: 24px; width: min(420px, calc(100vw - 32px));
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    }
+
+    /* ── Mobile ──────────────────────────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      header { padding: 0 12px; gap: 8px; }
+      header h1 { font-size: 15px; }
+      .btn-show-all { display: none; }
+
+      #map-section { height: 48vh; min-height: 280px; }
+      #map-legend { font-size: 11px; padding: 5px 12px; gap: 10px; }
+
+      main { padding: 14px 12px 60px; }
+
+      #property-grid { grid-template-columns: 1fr; gap: 12px; }
+
+      .card-price { font-size: 16px; }
+      .card-footer { flex-direction: column; gap: 6px; }
+      .btn-open, .btn-dismiss { width: 100%; text-align: center; }
+
+      #status-bar { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"
+       stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+    <polyline points="9 22 9 12 15 12 15 22"/>
+  </svg>
+  <h1>SUUMO House Tracker</h1>
+  <span class="header-badge" id="header-count">読込中…</span>
+  <button class="btn-show-all" id="btn-show-all" onclick="showAll()">スキップ済みを表示</button>
+  <button class="btn-settings" onclick="openSettings()" title="API設定">⚙️</button>
+</header>
+
+<!-- ── Settings modal ──────────────────────────────────────────────────────── -->
+<div id="settings-overlay" onclick="closeSettings()" style="display:none"></div>
+<div id="settings-modal" style="display:none">
+  <h3 style="margin-bottom:14px;font-size:16px;font-weight:700">⚙️ バックエンド設定</h3>
+  <p style="font-size:13px;color:#6b7280;margin-bottom:14px;line-height:1.6">
+    GitHub Pages からアクセスする場合、ローカルで起動しているサーバーの URL を入力してください。<br>
+    <code style="font-size:11px;background:#f3f4f6;padding:2px 6px;border-radius:4px">node server.js</code> 起動後の URL（例：<code style="font-size:11px;background:#f3f4f6;padding:2px 6px;border-radius:4px">http://localhost:3001</code>）
+  </p>
+  <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:6px">API Base URL</label>
+  <input id="api-url-input" type="url"
+    style="width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:7px;font-size:13px;margin-bottom:14px;outline:none"
+    placeholder="http://localhost:3001" />
+  <div style="display:flex;gap:8px">
+    <button onclick="saveSettings()"
+      style="flex:1;padding:9px;background:#e8351a;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer">
+      保存して再読込
+    </button>
+    <button onclick="closeSettings()"
+      style="padding:9px 16px;background:#f3f4f6;color:#374151;border:none;border-radius:7px;font-size:13px;cursor:pointer">
+      キャンセル
+    </button>
+  </div>
+  <p id="current-api" style="margin-top:12px;font-size:11px;color:#9ca3af;text-align:center"></p>
+</div>
+
+<!-- ── Google Map ──────────────────────────────────────────────────────────── -->
+<div id="map-section">
+  <div id="map"></div>
+
+  <div id="map-legend">
+    <div class="legend-item">
+      <span class="legend-dot" style="background:#e8351a"></span>気になる物件
+    </div>
+    <div class="legend-item">
+      <span class="legend-dot" style="background:#9ca3af"></span>スキップ済み
+    </div>
+  </div>
+
+  <div id="geocode-status"></div>
+</div>
+
+<!-- ── Main ────────────────────────────────────────────────────────────────── -->
+<main>
+  <div id="status-bar">
+    <span id="status-text">読み込み中…</span>
+    <span class="spacer"></span>
+    <button onclick="refreshProperties()">↻ 更新</button>
+  </div>
+
+  <div id="loading-state">
+    <div class="spinner"></div>
+    <p>物件情報を取得中…</p>
+  </div>
+
+  <div id="error-state" style="display:none">
+    <p>⚠️ データを取得できませんでした</p>
+    <button onclick="refreshProperties()"
+      style="margin-top:12px;padding:8px 20px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer">
+      再試行
+    </button>
+  </div>
+
+  <!-- Prefecture filter pills — populated dynamically after geocoding -->
+  <div id="pref-filter" style="display:none"></div>
+
+  <div id="property-grid"></div>
+  <div id="empty-state">
+    <div class="icon">✅</div>
+    <p>すべての物件を確認しました。<br>「スキップ済みを表示」で再表示できます。</p>
+  </div>
+</main>
+
+<!-- ── App script ───────────────────────────────────────────────────────────── -->
+<script>
+// ── API base URL (configurable for GitHub Pages use) ──────────────────────────
+// Priority: localStorage → ?api= URL param → localhost default
+const API_BASE = (() => {
+  const stored = localStorage.getItem('suumo_api_base');
+  const param  = new URLSearchParams(location.search).get('api');
+  return (param || stored || 'http://localhost:3001').replace(/\/$/, '');
+})();
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let allProperties  = [];
+let dismissed      = new Set(JSON.parse(localStorage.getItem('dismissed') || '[]'));
+let showDismissed  = false;
+const prefectureMap      = new Map();  // property id → prefecture string
+const selectedPrefectures = new Set(); // empty = show all
+
+// ── Google Maps globals ────────────────────────────────────────────────────────
+let gmap, infoWindow, geocoder;
+const markerMap    = {};          // id → { marker, geo, property }
+const boundsRef    = { bounds: null };
+const geocodeCache = new Map();   // station key → geo result (session cache)
+
+// ── Google Maps SVG pin icon ───────────────────────────────────────────────────
+function makeIcon(fill, scale = 1) {
+  const w = Math.round(28 * scale), h = Math.round(40 * scale);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 28 40">
+    <path d="M14 0C6.27 0 0 6.27 0 14c0 9.63 14 26 14 26s14-16.37 14-26C28 6.27 21.73 0 14 0z"
+          fill="${fill}" stroke="white" stroke-width="2"/>
+    <circle cx="14" cy="14" r="5" fill="white" opacity=".85"/>
+  </svg>`;
+  return {
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+    scaledSize: new google.maps.Size(w, h),
+    anchor:     new google.maps.Point(w / 2, h),
+  };
+}
+
+function getIcon(id) {
+  return dismissed.has(id) ? makeIcon('#9ca3af', .8) : makeIcon('#e8351a');
+}
+
+// ── Map init (called by Google Maps API callback) ─────────────────────────────
+window.initMap = function () {
+  gmap = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: 35.6762, lng: 139.6503 },
+    zoom: 11,
+    mapTypeControl:    false,
+    streetViewControl: false,
+    fullscreenControl: true,
+    zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
+  });
+  infoWindow = new google.maps.InfoWindow({ maxWidth: 280 });
+  geocoder   = new google.maps.Geocoder();
+  loadProperties();
+};
+
+// ── Marker management ──────────────────────────────────────────────────────────
+// Use fully inline styles — Google Maps InfoWindow has its own CSS scope
+// so external stylesheet classes are unreliable inside it.
+function buildInfoContent(p, geo) {
+  const walk = p.walkMin ? `徒歩${p.walkMin}分` : (p.busMin ? `バス${p.busMin}分` : '');
+  const meta = [p.station ? `${p.station}駅` : '', walk, p.totalUnits ? `${p.totalUnits}戸` : '']
+               .filter(Boolean).join(' · ');
+  return `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-width:210px;max-width:260px">
+      <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:5px;line-height:1.45">${esc(p.title)}</div>
+      ${meta    ? `<div style="font-size:12px;color:#6b7280;margin-bottom:5px;line-height:1.6">${esc(meta)}</div>` : ''}
+      ${p.price ? `<div style="font-size:16px;font-weight:800;color:#e8351a;margin-bottom:6px">${esc(p.price)}</div>` : ''}
+      ${geo.address ? `<div style="font-size:11px;color:#9ca3af;margin-bottom:10px;line-height:1.4">📍 ${esc(geo.address)}</div>` : ''}
+      <a href="${p.link}" target="_blank"
+         style="display:block;text-align:center;padding:8px 12px;border-radius:7px;
+                font-size:13px;font-weight:600;text-decoration:none;
+                background:#e8351a;color:#ffffff;letter-spacing:.2px">
+        物件詳細を見る ↗
+      </a>
+    </div>`;
+}
+
+function addMarker(p, geo) {
+  const pid = p.id;
+  if (markerMap[pid]) {
+    markerMap[pid].marker.setIcon(getIcon(pid));
+    return;
+  }
+
+  const marker = new google.maps.Marker({
+    position: { lat: geo.lat, lng: geo.lng },
+    map: gmap,
+    icon: getIcon(pid),
+    title: p.title,
+  });
+
+  // Only open info window — no auto-scroll to card list
+  marker.addListener('click', () => {
+    infoWindow.setContent(buildInfoContent(p, geo));
+    infoWindow.open(gmap, marker);
+  });
+
+  markerMap[pid] = { marker, geo, property: p };
+
+  if (!boundsRef.bounds) boundsRef.bounds = new google.maps.LatLngBounds();
+  boundsRef.bounds.extend({ lat: geo.lat, lng: geo.lng });
+}
+
+function fitBounds() {
+  if (boundsRef.bounds && !boundsRef.bounds.isEmpty()) {
+    gmap.fitBounds(boundsRef.bounds, 60);
+    if (gmap.getZoom() > 14) gmap.setZoom(14);
+  }
+}
+
+// Publicly callable from card buttons
+window.focusMarker = function (id) {
+  const entry = markerMap[id];
+  if (!entry) return;
+  infoWindow.setContent(buildInfoContent(entry.property, entry.geo));
+  infoWindow.open(gmap, entry.marker);
+  gmap.panTo({ lat: entry.geo.lat, lng: entry.geo.lng });
+  gmap.setZoom(15);
+  // scroll map into view if below fold
+  document.getElementById('map-section').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+
+// ── Client-side geocoding via google.maps.Geocoder ────────────────────────────
+function geocodeQuery(query) {
+  // Return from session cache if available
+  if (geocodeCache.has(query)) return Promise.resolve(geocodeCache.get(query));
+
+  return new Promise(resolve => {
+    geocoder.geocode(
+      { address: query, componentRestrictions: { country: 'JP' } },
+      (results, status) => {
+        if (status === 'OK' && results[0]) {
+          const loc = results[0].geometry.location;
+          const geo = { lat: loc.lat(), lng: loc.lng(), address: results[0].formatted_address };
+          geocodeCache.set(query, geo);
+          resolve(geo);
+        } else {
+          geocodeCache.set(query, null);
+          resolve(null);
+        }
+      }
+    );
+  });
+}
+
+async function geocodeProperty(p) {
+  if (!p.station) return null;
+  // Try station name, then line + station for disambiguation
+  return await geocodeQuery(`${p.station}駅`)
+      || await geocodeQuery(`${p.line ? p.line + ' ' : ''}${p.station}駅`);
+}
+
+async function geocodeAll(properties) {
+  const statusEl = document.getElementById('geocode-status');
+  statusEl.style.display = 'block';
+  statusEl.textContent   = '📍 地図上の位置を取得中…';
+
+  let done = 0;
+
+  // Deduplicate by station so we don't geocode the same station twice
+  const stationSeen = new Map();  // stationKey → geo promise
+
+  const tasks = properties.map(async p => {
+    if (!p.station) return;
+    const key = `${p.station}駅`;
+
+    // Reuse in-flight promise for duplicate stations
+    if (!stationSeen.has(key)) stationSeen.set(key, geocodeProperty(p));
+    const geo = await stationSeen.get(key);
+
+    if (geo?.lat) {
+      addMarker(p, geo);
+      done++;
+      statusEl.textContent = `📍 位置取得中 ${done} / ${properties.length}`;
+
+      // Store prefecture and re-group cards
+      const pref = extractPrefecture(geo.address);
+      if (pref) {
+        prefectureMap.set(p.id, pref);
+        scheduleRender();
+        renderPrefectureFilter();
+      }
+
+      const addrEl = document.getElementById(`addr-${safeId(p.id)}`);
+      if (addrEl) { addrEl.textContent = geo.address || `${p.station}駅付近`; addrEl.style.display = ''; }
+
+      const pinBtn = document.getElementById(`pin-${safeId(p.id)}`);
+      if (pinBtn) pinBtn.classList.remove('no-geo');
+    }
+  });
+
+  await Promise.allSettled(tasks);
+  fitBounds();
+  renderPrefectureFilter();
+  renderProperties();  // final render with all prefectures known
+  statusEl.textContent = `✅ ${done} 件の位置情報を取得しました`;
+  setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+}
+
+// ── Prefecture helpers ─────────────────────────────────────────────────────────
+// Only match kanji (\u4e00-\u9fff) before 都/道/府/県 to avoid "日本、埼玉県"
+const PREF_RE = /東京都|大阪府|京都府|北海道|[\u4e00-\u9fff]{2,5}[県]/u;
+
+function extractPrefecture(address) {
+  if (!address) return null;
+  const m = address.match(PREF_RE);
+  return m ? m[0] : null;
+}
+
+// Order: 東京都 first, then by property count desc, unknown last
+// Works with both Map<string, Array> and Map<string, number>
+function sortedPrefectures(groups) {
+  const size = v => Array.isArray(v) ? v.length : (v || 0);
+  return [...groups.keys()].sort((a, b) => {
+    if (a === '東京都') return -1;
+    if (b === '東京都') return  1;
+    if (a === '不明')   return  1;
+    if (b === '不明')   return -1;
+    return size(groups.get(b)) - size(groups.get(a));
+  });
+}
+
+// ── DOM helpers ────────────────────────────────────────────────────────────────
+function safeId(id) { return id.replace(/[^a-zA-Z0-9_-]/g, '_'); }
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function scrollToCard(sid) {
+  const el = document.getElementById(sid);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function highlightCard(sid) {
+  document.querySelectorAll('.card.highlighted').forEach(c => c.classList.remove('highlighted'));
+  const el = document.getElementById(sid);
+  if (!el) return;
+  el.classList.add('highlighted');
+  setTimeout(() => el.classList.remove('highlighted'), 2500);
+}
+
+// Debounced re-render so rapid geocode results don't thrash the DOM
+let _renderTimer = null;
+function scheduleRender() {
+  clearTimeout(_renderTimer);
+  _renderTimer = setTimeout(renderProperties, 120);
+}
+
+// ── Prefecture filter bar ──────────────────────────────────────────────────────
+function renderPrefectureFilter() {
+  const bar = document.getElementById('pref-filter');
+  if (!bar) return;
+
+  // Collect unique known prefectures in display order
+  const groups = new Map();
+  allProperties.forEach(p => {
+    const pref = prefectureMap.get(p.id);
+    if (pref) groups.set(pref, (groups.get(pref) || 0) + 1);
+  });
+  if (groups.size === 0) { bar.style.display = 'none'; return; }
+
+  bar.style.display = 'flex';
+  bar.innerHTML = '';
+
+  // "すべて" pill
+  const allBtn = document.createElement('button');
+  allBtn.className = 'pref-pill' + (selectedPrefectures.size === 0 ? ' active' : '');
+  allBtn.textContent = 'すべて';
+  allBtn.onclick = () => {
+    selectedPrefectures.clear();
+    renderPrefectureFilter();
+    renderProperties();
+  };
+  bar.appendChild(allBtn);
+
+  // One pill per prefecture
+  const prefKeys = sortedPrefectures(groups);
+  prefKeys.forEach(pref => {
+    const btn = document.createElement('button');
+    const isActive = selectedPrefectures.has(pref);
+    btn.className = 'pref-pill' + (isActive ? ' active' : '');
+    btn.innerHTML = `${esc(pref)} <span class="pill-count">${groups.get(pref)}</span>`;
+    btn.onclick = () => {
+      if (selectedPrefectures.has(pref)) selectedPrefectures.delete(pref);
+      else selectedPrefectures.add(pref);
+      renderPrefectureFilter();
+      renderProperties();
+    };
+    bar.appendChild(btn);
+  });
+}
+
+// ── Render cards ───────────────────────────────────────────────────────────────
+function isNew(dateStr) {
+  return dateStr && (Date.now() - new Date(dateStr).getTime()) < 3 * 24 * 60 * 60 * 1000;
+}
+
+function syncMarkerVisibility() {
+  Object.entries(markerMap).forEach(([id, { marker }]) => {
+    const pref    = prefectureMap.get(id);
+    const visible = selectedPrefectures.size === 0 || (pref && selectedPrefectures.has(pref));
+    marker.setMap(visible ? gmap : null);
+    if (visible) marker.setIcon(getIcon(id));
+  });
+}
+
+function buildCard(p) {
+  const isDis   = dismissed.has(p.id);
+  const sid     = safeId(p.id);
+  const hasGeo  = !!markerMap[p.id];
+  const walk    = p.walkMin ? `徒歩${p.walkMin}分` : (p.busMin ? `バス${p.busMin}分` : '');
+  const dateStr = p.pubDate ? new Date(p.pubDate).toLocaleDateString('ja-JP') : '';
+
+  const card = document.createElement('div');
+  card.className = `card${isDis ? ' dismissed' : ''}`;
+  card.id = sid;
+  card.innerHTML = `
+    <div class="card-header">
+      <button id="pin-${sid}" class="card-map-btn${hasGeo ? '' : ' no-geo'}"
+              title="地図で見る" onclick="focusMarker(${JSON.stringify(p.id)})">📍</button>
+      <div class="card-title-wrap">
+        <div class="card-title"><a href="${p.link}" target="_blank">${esc(p.title)}</a></div>
+        ${dateStr ? `<div class="card-date">${dateStr}</div>` : ''}
+      </div>
+      ${isNew(p.pubDate) ? '<span class="new-badge">NEW</span>' : ''}
+    </div>
+    <div class="card-body">
+      ${p.price ? `<div class="card-price">${esc(p.price)} <small>（税込）</small></div>` : ''}
+      <div class="card-meta">
+        ${p.station    ? `<span class="meta-station">${esc(p.station)}駅</span>` : ''}
+        ${walk         ? `<span class="meta-walk">${esc(walk)}</span>`           : ''}
+        ${p.totalUnits ? `<span class="meta-units">${p.totalUnits}戸</span>`     : ''}
+      </div>
+      <div class="meta-addr" id="addr-${sid}"
+           style="${markerMap[p.id]?.geo?.address ? '' : 'display:none'}">
+        ${markerMap[p.id]?.geo?.address ?? ''}
+      </div>
+    </div>
+    <div class="card-footer">
+      <a class="btn-open" href="${p.link}" target="_blank">物件詳細を見る ↗</a>
+      <button class="btn-dismiss" onclick="toggleDismiss(${JSON.stringify(p.id)})">
+        ${isDis ? '✓ 表示に戻す' : 'スキップ'}
+      </button>
+    </div>
+  `;
+  return card;
+}
+
+function renderProperties() {
+  const container = document.getElementById('property-grid');
+  let visible = showDismissed ? allProperties : allProperties.filter(p => !dismissed.has(p.id));
+
+  // Apply prefecture filter
+  if (selectedPrefectures.size > 0) {
+    visible = visible.filter(p => {
+      const pref = prefectureMap.get(p.id);
+      return pref && selectedPrefectures.has(pref);
+    });
+  }
+
+  container.innerHTML = '';
+  document.getElementById('empty-state').style.display = visible.length ? 'none' : 'block';
+
+  const skipCnt = allProperties.filter(p => dismissed.has(p.id)).length;
+  const actCnt  = allProperties.length - skipCnt;
+  document.getElementById('header-count').textContent = `${actCnt} 件`;
+  document.getElementById('status-text').innerHTML =
+    `<strong>${actCnt}</strong> 件表示中 ` +
+    (skipCnt ? `<span style="color:var(--grey)">(${skipCnt} 件スキップ)</span>` : '');
+
+  // Group by prefecture
+  const groups = new Map();
+  visible.forEach(p => {
+    const pref = prefectureMap.get(p.id) || '不明';
+    if (!groups.has(pref)) groups.set(pref, []);
+    groups.get(pref).push(p);
+  });
+
+  // Unknown-only while geocoding starts → show flat grid without section header clutter
+  const prefKeys = sortedPrefectures(groups);
+  const onlyUnknown = prefKeys.length === 1 && prefKeys[0] === '不明';
+
+  prefKeys.forEach(pref => {
+    const props = groups.get(pref);
+    const section = document.createElement('div');
+    section.className = 'pref-section';
+
+    if (!onlyUnknown) {
+      const hdr = document.createElement('div');
+      hdr.className = 'pref-header';
+      hdr.innerHTML = `
+        <span class="pref-name">${esc(pref)}</span>
+        <span class="pref-count">${props.length}件</span>`;
+      section.appendChild(hdr);
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'pref-grid';
+    props.forEach(p => grid.appendChild(buildCard(p)));
+    section.appendChild(grid);
+    container.appendChild(section);
+  });
+
+  // Sync marker visibility (prefecture filter) and icons (dismissed state)
+  syncMarkerVisibility();
+}
+
+window.toggleDismiss = function (id) {
+  if (dismissed.has(id)) dismissed.delete(id);
+  else dismissed.add(id);
+  localStorage.setItem('dismissed', JSON.stringify([...dismissed]));
+  renderProperties();
+  if (markerMap[id]) markerMap[id].marker.setIcon(getIcon(id));
+};
+
+window.showAll = function () {
+  showDismissed = !showDismissed;
+  document.getElementById('btn-show-all').textContent =
+    showDismissed ? '非表示を隠す' : 'スキップ済みを表示';
+  renderProperties();
+};
+
+// ── Load & refresh ─────────────────────────────────────────────────────────────
+async function loadProperties() {
+  document.getElementById('loading-state').style.display = 'block';
+  document.getElementById('error-state').style.display   = 'none';
+  document.getElementById('property-grid').innerHTML     = '';
+
+  try {
+    const data = await fetch(`${API_BASE}/api/properties`).then(r => r.json());
+    if (data.error) throw new Error(data.error);
+
+    allProperties = data.properties || [];
+    document.getElementById('loading-state').style.display = 'none';
+    renderProperties();
+    geocodeAll(allProperties);
+  } catch (err) {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('error-state').style.display   = 'block';
+    console.error(err);
+  }
+}
+
+// ── Settings modal ─────────────────────────────────────────────────────────────
+window.openSettings = function () {
+  document.getElementById('api-url-input').value = API_BASE;
+  document.getElementById('current-api').textContent = `現在の設定: ${API_BASE}`;
+  document.getElementById('settings-overlay').style.display = 'block';
+  document.getElementById('settings-modal').style.display   = 'block';
+  document.getElementById('api-url-input').focus();
+};
+
+window.closeSettings = function () {
+  document.getElementById('settings-overlay').style.display = 'none';
+  document.getElementById('settings-modal').style.display   = 'none';
+};
+
+window.saveSettings = function () {
+  const val = document.getElementById('api-url-input').value.trim().replace(/\/$/, '');
+  if (val) localStorage.setItem('suumo_api_base', val);
+  location.reload();
+};
+
+window.refreshProperties = function () {
+  Object.values(markerMap).forEach(({ marker }) => marker.setMap(null));
+  Object.keys(markerMap).forEach(k => delete markerMap[k]);
+  prefectureMap.clear();
+  selectedPrefectures.clear();
+  boundsRef.bounds = null;
+  loadProperties();
+};
+</script>
+
+<!-- Google Maps JS API — loads after app script, calls initMap when ready -->
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAOpvWGt9_O1xtbJeFG9KbbF96KR3UFugA&callback=initMap&language=ja&region=JP">
+</script>
+
+</body>
+</html>
