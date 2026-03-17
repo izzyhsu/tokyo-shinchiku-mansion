@@ -3,6 +3,7 @@ const LS_KEYS = {
   favorites: 'suumo_favorites',
   hidden: 'suumo_hidden',
   notes: 'suumo_notes',
+  listingMeta: 'suumo_listing_meta',
 };
 
 const state = {
@@ -11,6 +12,7 @@ const state = {
   favorites: new Set(JSON.parse(localStorage.getItem(LS_KEYS.favorites) || '[]')),
   hidden: new Set(JSON.parse(localStorage.getItem(LS_KEYS.hidden) || '[]')),
   notes: JSON.parse(localStorage.getItem(LS_KEYS.notes) || '{}'),
+  listingMeta: JSON.parse(localStorage.getItem(LS_KEYS.listingMeta) || '{}'),
   showFavOnly: false,
   sortKey: 'date',
   sortDir: -1,
@@ -36,10 +38,50 @@ function resolveApiBase() {
 
 function persistSet(key, set) { localStorage.setItem(key, JSON.stringify([...set])); }
 function persistNotes() { localStorage.setItem(LS_KEYS.notes, JSON.stringify(state.notes)); }
+function persistListingMeta() { localStorage.setItem(LS_KEYS.listingMeta, JSON.stringify(state.listingMeta)); }
 function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function safeId(id) { return id.replace(/[^a-zA-Z0-9_-]/g, '_'); }
 function extractPrefecture(address) { const m = (address || '').match(/東京都|大阪府|京都府|北海道|[\u4e00-\u9fff]{2,5}[県]/u); return m ? m[0] : null; }
-function isNew(dateStr) { return dateStr && (Date.now() - new Date(dateStr).getTime()) < 3 * 24 * 60 * 60 * 1000; }
+function toMs(value) { const ms = value ? new Date(value).getTime() : 0; return Number.isFinite(ms) ? ms : 0; }
+function listingAgeDays(value) {
+  const ms = toMs(value);
+  if (!ms) return null;
+  return Math.floor((Date.now() - ms) / (24 * 60 * 60 * 1000));
+}
+function listingBadge(value) {
+  const days = listingAgeDays(value);
+  if (days === null || days < 0) return '';
+  if (days <= 1) return 'NEW';
+  if (days <= 3) return 'Recent';
+  return '';
+}
+function listingAgeLabel(value) {
+  const days = listingAgeDays(value);
+  if (days === null || days < 0) return '—';
+  if (days === 0) return '今天';
+  if (days === 1) return '1 天前';
+  return `${days} 天前`;
+}
+function getListingDateMs(p) {
+  return toMs(p.listingDate || p.pubDate || p.firstSeenAt || p.createdAt);
+}
+function isNew(dateStr) { return Boolean(listingBadge(dateStr)); }
+function syncListingMeta(properties) {
+  const nowIso = new Date().toISOString();
+  for (const p of properties) {
+    const meta = state.listingMeta[p.id] || {};
+    const next = {
+      firstSeenAt: meta.firstSeenAt || nowIso,
+      lastSeenAt: nowIso,
+      listingDate: p.pubDate || meta.listingDate || null,
+    };
+    state.listingMeta[p.id] = next;
+    p.firstSeenAt = next.firstSeenAt;
+    p.lastSeenAt = next.lastSeenAt;
+    p.listingDate = next.listingDate;
+  }
+  persistListingMeta();
+}
 
 async function fetchJson(url) {
   const res = await fetch(url);
@@ -183,7 +225,7 @@ function sortProps(props) {
       case 'station': va = a.station || ''; vb = b.station || ''; return state.sortDir * va.localeCompare(vb, 'ja');
       case 'walk': va = a.walkMin || a.busMin || 999; vb = b.walkMin || b.busMin || 999; return state.sortDir * (va - vb);
       case 'units': va = a.totalUnits || 0; vb = b.totalUnits || 0; return state.sortDir * (va - vb);
-      case 'date': va = a.pubDate ? new Date(a.pubDate).getTime() : 0; vb = b.pubDate ? new Date(b.pubDate).getTime() : 0; return state.sortDir * (va - vb);
+      case 'date': va = getListingDateMs(a); vb = getListingDateMs(b); return state.sortDir * (va - vb);
       default: return 0;
     }
   });
@@ -259,7 +301,10 @@ function buildRow(p) {
   const sid = safeId(p.id);
   const hasGeo = !!state.markerMap[p.id];
   const walk = p.walkMin ? `徒歩${p.walkMin}分` : (p.busMin ? `バス${p.busMin}分` : '—');
-  const dateStr = p.pubDate ? new Date(p.pubDate).toLocaleDateString('ja-JP', { month:'numeric', day:'numeric' }) : '—';
+  const dateValue = p.listingDate || p.pubDate || p.firstSeenAt;
+  const dateStr = dateValue ? new Date(dateValue).toLocaleDateString('ja-JP', { month:'numeric', day:'numeric' }) : '—';
+  const dateAge = listingAgeLabel(dateValue);
+  const badge = listingBadge(dateValue);
   const subParts = [];
   if (isChuko) {
     if (p.area) subParts.push(`${p.area}㎡`);
@@ -277,11 +322,11 @@ function buildRow(p) {
   if (isFav) tr.classList.add('row-fav');
   tr.innerHTML = `
     <td class="col-pin"><button id="pin-${sid}" class="pin-btn${hasGeo ? '' : ' no-geo'}" title="地図で見る" onclick="window.focusMarker(${JSON.stringify(p.id)})">📍</button></td>
-    <td class="col-title"><div class="row-title"><span class="type-badge ${isChuko ? 'chuko' : 'new'}">${isChuko ? '中古' : '新築'}</span>${isNew(p.pubDate) ? '<span class="new-badge">NEW</span>' : ''}<a href="${p.link}" target="_blank">${esc(p.title)}</a></div>${subParts.length ? `<div class="row-sub">${esc(subParts.join(' · '))}</div>` : ''}<div class="row-sub" id="addr-${sid}" ${addr ? '' : 'style="display:none"'} data-base="${esc(subParts.join(' · '))}">${addr ? esc(addr) : ''}</div>${note ? `<div class="row-sub">📝 ${esc(note)}</div>` : ''}</td>
+    <td class="col-title"><div class="row-title"><span class="type-badge ${isChuko ? 'chuko' : 'new'}">${isChuko ? '中古' : '新築'}</span>${badge ? `<span class="new-badge ${badge === 'Recent' ? 'recent-badge' : ''}">${badge}</span>` : ''}<a href="${p.link}" target="_blank">${esc(p.title)}</a></div>${subParts.length ? `<div class="row-sub">${esc(subParts.join(' · '))}</div>` : ''}<div class="row-sub" id="addr-${sid}" ${addr ? '' : 'style="display:none"'} data-base="${esc(subParts.join(' · '))}">${addr ? esc(addr) : ''}</div>${note ? `<div class="row-sub">📝 ${esc(note)}</div>` : ''}</td>
     <td class="col-station">${p.station ? esc(p.station) + '駅' : '—'}</td>
     <td class="col-walk">${walk}</td>
     <td class="col-units">${p.totalUnits ? p.totalUnits + '戸' : (isChuko ? p.floorInfo ? `${p.floorInfo}階` : '—' : '—')}</td>
-    <td class="col-date">${dateStr}</td>
+    <td class="col-date"><div>${dateStr}</div><div class="date-age">${dateAge}</div></td>
     <td class="col-actions"><button class="btn-fav" onclick="window.toggleFavorite(${JSON.stringify(p.id)})">${isFav ? '❤️' : '🤍'}</button> <button class="btn-fav" title="隠す" onclick="window.toggleHidden(${JSON.stringify(p.id)})">🙈</button> <button class="btn-fav" title="メモ" onclick="window.editNote(${JSON.stringify(p.id)})">📝</button> <a class="btn-detail" href="${p.link}" target="_blank">詳細 ↗</a></td>`;
   return tr;
 }
@@ -343,6 +388,7 @@ async function loadProperties() {
   try {
     const [data] = await Promise.all([fetchJson(`${state.apiBase}/api/properties`), loadChukoData()]);
     state.allProperties = [...(data.properties || []).map(p => ({ ...p, type: 'new' })), ...state.chukoData];
+    syncListingMeta(state.allProperties);
     state.chukoData.forEach(p => state.prefectureMap.set(p.id, '東京都'));
     const fetchedAt = new Date(data.fetchedAt || Date.now());
     const dateTimeStr = fetchedAt.toLocaleDateString('ja-JP', { month:'numeric', day:'numeric' }) + ' ' + fetchedAt.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' });

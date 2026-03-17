@@ -74,6 +74,8 @@ main { max-width:1200px; margin:0 auto; padding:20px 20px 60px; }
 .type-badge.new { background:var(--red); color:#fff; }
 .type-badge.chuko { background:var(--blue); color:#fff; }
 .new-badge { display:inline-block; background:#16a34a; color:#fff; font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; vertical-align:middle; margin-right:3px; }
+.recent-badge { background:#f59e0b; }
+.date-age { font-size:10px; color:#9ca3af; margin-top:2px; }
 .pin-btn { width:30px; height:30px; background:#fef2f2; border:none; border-radius:6px; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; transition:background .15s; margin:0 auto; }
 .pin-btn:hover { background:#fee2e2; }
 .pin-btn.no-geo { opacity:.2; cursor:default; pointer-events:none; }
