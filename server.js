@@ -7,24 +7,102 @@ import fs from 'fs';
 import { parseDescription } from './lib/rss.js';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname  = path.dirname(__filename);
+const __dirname = path.dirname(__filename);
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 3001;
 
 const GOOGLE_MAPS_BROWSER_KEY = process.env.GOOGLE_MAPS_KEY_BROWSER || process.env.GOOGLE_MAPS_BROWSER_KEY || '';
-const GOOGLE_MAPS_SERVER_KEY  = process.env.GOOGLE_MAPS_KEY_SERVER || process.env.GOOGLE_MAPS_SERVER_KEY || '';
-if (!GOOGLE_MAPS_BROWSER_KEY) console.warn('⚠️  GOOGLE_MAPS_KEY_BROWSER not set');
-if (!GOOGLE_MAPS_SERVER_KEY)  console.warn('⚠️  GOOGLE_MAPS_KEY_SERVER not set');
+const GOOGLE_MAPS_SERVER_KEY = process.env.GOOGLE_MAPS_KEY_SERVER || process.env.GOOGLE_MAPS_SERVER_KEY || '';
+const PUBLIC_API_BASE = process.env.PUBLIC_API_BASE || '';
+const ALLOWED_ORIGINS = parseAllowedOrigins(process.env.ALLOWED_ORIGINS);
+const GEOCODE_RATE_LIMIT_WINDOW_MS = parsePositiveInt(process.env.GEOCODE_RATE_LIMIT_WINDOW_MS, 60_000);
+const GEOCODE_RATE_LIMIT_MAX = parsePositiveInt(process.env.GEOCODE_RATE_LIMIT_MAX, 30);
+const SUUMO_ALLOWED_HOSTS = new Set(['suumo.jp', 'www.suumo.jp']);
 
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
+if (!GOOGLE_MAPS_BROWSER_KEY) console.warn('⚠️  GOOGLE_MAPS_KEY_BROWSER not set');
+if (!GOOGLE_MAPS_SERVER_KEY) console.warn('⚠️  GOOGLE_MAPS_KEY_SERVER not set');
+if (ALLOWED_ORIGINS.size === 0) console.warn('⚠️  ALLOWED_ORIGINS not set; defaulting to same-origin only for API responses');
+
+const geocodeRateLimit = new Map();
+
+function parsePositiveInt(value, fallback) {
+  const parsed = Number.parseInt(value ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parseAllowedOrigins(raw) {
+  return new Set(
+    String(raw || '')
+      .split(',')
+      .map(v => v.trim())
+      .filter(Boolean)
+  );
+}
+
+function getRequestOrigin(req) {
+  const origin = req.headers.origin;
+  if (typeof origin === 'string' && origin) return origin;
+  return null;
+}
+
+function applyApiCors(req, res) {
+  const origin = getRequestOrigin(req);
+  if (!origin) return;
+  if (ALLOWED_ORIGINS.has(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
+}
+
+function sameOriginApiOnly(req, res, next) {
+  applyApiCors(req, res);
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return res.sendStatus(204);
+  }
   next();
-});
+}
+
+function normalizeText(value, maxLen = 200) {
+  const normalized = String(value || '').trim().replace(/\s+/g, ' ');
+  return normalized.slice(0, maxLen);
+}
+
+function isAllowedSuumoUrl(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    return url.protocol === 'https:' && SUUMO_ALLOWED_HOSTS.has(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function clientIp(req) {
+  return (req.headers['x-forwarded-for']?.toString().split(',')[0].trim()) || req.socket.remoteAddress || 'unknown';
+}
+
+function enforceRateLimit(req, res, next) {
+  const key = clientIp(req);
+  const now = Date.now();
+  const entry = geocodeRateLimit.get(key);
+  if (!entry || entry.resetAt <= now) {
+    geocodeRateLimit.set(key, { count: 1, resetAt: now + GEOCODE_RATE_LIMIT_WINDOW_MS });
+    return next();
+  }
+  if (entry.count >= GEOCODE_RATE_LIMIT_MAX) {
+    const retryAfterSec = Math.max(1, Math.ceil((entry.resetAt - now) / 1000));
+    res.setHeader('Retry-After', retryAfterSec);
+    return res.status(429).json({ error: 'Too many geocode requests', retryAfterSec });
+  }
+  entry.count += 1;
+  next();
+}
 
 app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/api', sameOriginApiOnly);
 
 const GEOCACHE_FILE = path.join(__dirname, 'geocache.json');
 let geocache = {};
@@ -40,10 +118,10 @@ console.log(`📦 Geocache loaded: ${Object.keys(geocache).length} entries`);
 
 const googleClient = axios.create({ timeout: 6000 });
 const rssClient = axios.create({ timeout: 15000, headers: {
-  'User-Agent':      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-  'Accept':          'application/rss+xml, application/xml, text/xml, */*',
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+  'Accept': 'application/rss+xml, application/xml, text/xml, */*',
   'Accept-Language': 'ja,en;q=0.9',
-  'Referer':         'https://suumo.jp/',
+  'Referer': 'https://suumo.jp/',
 } });
 
 async function googleGeocode(address) {
@@ -83,15 +161,18 @@ async function googlePlacesSearch(query) {
 }
 
 async function scrapePropertyAddress(url) {
+  if (!isAllowedSuumoUrl(url)) return null;
   try {
     const res = await axios.get(url, {
       headers: {
-        'User-Agent':      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
         'Accept-Language': 'ja,en;q=0.9',
-        'Referer':         'https://suumo.jp/',
+        'Referer': 'https://suumo.jp/',
       },
       timeout: 10000,
       responseType: 'text',
+      maxRedirects: 3,
+      validateStatus: status => status >= 200 && status < 400,
     });
     const patterns = [
       /所在地<\/th>\s*<td[^>]*>\s*(?:<[^>]+>)?([^<]{5,})/,
@@ -115,14 +196,22 @@ async function scrapePropertyAddress(url) {
 app.get('/api/config', (req, res) => {
   res.json({
     mapsKey: GOOGLE_MAPS_BROWSER_KEY,
-    apiBase: process.env.PUBLIC_API_BASE || '',
+    apiBase: PUBLIC_API_BASE,
   });
 });
 
 const geocodeInflight = new Map();
 
-app.get('/api/geocode', async (req, res) => {
-  const { link, title, station, line } = req.query;
+app.get('/api/geocode', enforceRateLimit, async (req, res) => {
+  const link = normalizeText(req.query.link, 500);
+  const title = normalizeText(req.query.title, 160);
+  const station = normalizeText(req.query.station, 80);
+  const line = normalizeText(req.query.line, 120);
+
+  if (link && !isAllowedSuumoUrl(link)) {
+    return res.status(400).json({ error: 'Only HTTPS suumo.jp listing URLs are allowed' });
+  }
+
   const cacheKey = link || title;
   if (!cacheKey) return res.json(null);
 
@@ -147,7 +236,7 @@ app.get('/api/geocode', async (req, res) => {
 
     if (!result && title) {
       const geo = await googlePlacesSearch(title)
-        || await googlePlacesSearch(`${title} ${station ? station + '駅' : ''}`.trim());
+        || await googlePlacesSearch(`${title} ${station ? `${station}駅` : ''}`.trim());
       if (geo) result = { ...geo, source: 'places' };
     }
 
