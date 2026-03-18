@@ -65,6 +65,29 @@ function listingAgeLabel(value) {
 function getListingDateMs(p) {
   return toMs(p.listingDate || p.pubDate || p.firstSeenAt || p.createdAt);
 }
+function isTokyoLink(link) {
+  return typeof link === 'string' && /\/tokyo\//.test(link);
+}
+function isTokyoPrefecture(value) {
+  return extractPrefecture(value || '') === '東京都';
+}
+function pruneNonTokyoState(removedIds) {
+  if (!removedIds.length) return;
+  removedIds.forEach(id => {
+    delete state.listingMeta[id];
+    delete state.notes[id];
+    state.hidden.delete(id);
+    state.favorites.delete(id);
+    state.prefectureMap.delete(id);
+    const entry = state.markerMap[id];
+    if (entry?.marker) entry.marker.setMap(null);
+    delete state.markerMap[id];
+  });
+  persistListingMeta();
+  persistNotes();
+  persistSet(LS_KEYS.hidden, state.hidden);
+  persistSet(LS_KEYS.favorites, state.favorites);
+}
 function isNew(dateStr) { return Boolean(listingBadge(dateStr)); }
 function syncListingMeta(properties) {
   const nowIso = new Date().toISOString();
@@ -95,15 +118,17 @@ const CHUKO_DATA_URL = new URL('../data/chuko.json', import.meta.url);
 async function loadChukoData() {
   const data = await fetchJson(CHUKO_DATA_URL);
   state.chukoUpdatedAt = data.updatedAt || '—';
-  state.chukoData = (data.properties || []).map((p, i) => ({
-    ...p,
-    id: `chuko-${i}`,
-    type: 'chuko',
-    pubDate: null,
-    totalUnits: null,
-    line: null,
-    busMin: null,
-  }));
+  state.chukoData = (data.properties || [])
+    .filter(p => isTokyoPrefecture(p.address || p.district || '東京都'))
+    .map((p, i) => ({
+      ...p,
+      id: `chuko-${i}`,
+      type: 'chuko',
+      pubDate: null,
+      totalUnits: null,
+      line: null,
+      busMin: null,
+    }));
 }
 
 function makeIcon(fill, scale = 1) {
@@ -178,15 +203,20 @@ async function geocodeAll(properties) {
   statusEl.style.display = 'block';
   statusEl.textContent = '📍 地図上の位置を取得中…';
   let done = 0, idx = 0;
+  const nonTokyoIds = new Set();
   const worker = async () => {
     while (idx < properties.length) {
       const p = properties[idx++];
       const geo = await geocodeProperty(p);
       if (geo?.lat) {
+        const pref = extractPrefecture(geo.resolvedAddress || geo.address || '');
+        if (pref && pref !== '東京都') {
+          nonTokyoIds.add(p.id);
+          continue;
+        }
         addMarker(p, geo);
         done++;
         statusEl.textContent = `📍 位置取得中 ${done} / ${properties.length}`;
-        const pref = extractPrefecture(geo.address);
         if (pref) state.prefectureMap.set(p.id, pref);
         const addrEl = document.getElementById(`addr-${safeId(p.id)}`);
         if (addrEl) {
@@ -199,6 +229,11 @@ async function geocodeAll(properties) {
     }
   };
   await Promise.allSettled(Array.from({ length: 4 }, worker));
+  if (nonTokyoIds.size > 0) {
+    const removedIds = [...nonTokyoIds];
+    state.allProperties = state.allProperties.filter(p => !nonTokyoIds.has(p.id));
+    pruneNonTokyoState(removedIds);
+  }
   fitBounds();
   renderPrefectureFilter();
   renderProperties();
@@ -387,7 +422,10 @@ async function loadProperties() {
   document.getElementById('property-grid').innerHTML = '';
   try {
     const [data] = await Promise.all([fetchJson(`${state.apiBase}/api/properties`), loadChukoData()]);
-    state.allProperties = [...(data.properties || []).map(p => ({ ...p, type: 'new' })), ...state.chukoData];
+    state.allProperties = [
+      ...(data.properties || []).map(p => ({ ...p, type: 'new' })).filter(p => isTokyoLink(p.link)),
+      ...state.chukoData,
+    ];
     syncListingMeta(state.allProperties);
     state.chukoData.forEach(p => state.prefectureMap.set(p.id, '東京都'));
     const fetchedAt = new Date(data.fetchedAt || Date.now());
