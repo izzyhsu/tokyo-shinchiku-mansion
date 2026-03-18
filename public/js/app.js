@@ -190,6 +190,24 @@ window.focusMarker = function(id) {
   document.getElementById('map-section').scrollIntoView({ behavior:'smooth', block:'nearest' });
 };
 
+function bindPropertyGridActions() {
+  const grid = document.getElementById('property-grid');
+  if (grid.dataset.actionsBound === '1') return;
+  grid.dataset.actionsBound = '1';
+  grid.addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-action]');
+    if (!button) return;
+    const { action, id } = button.dataset;
+    if (!id) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (action === 'focus') window.focusMarker(id);
+    if (action === 'favorite') window.toggleFavorite(id);
+    if (action === 'hidden') window.toggleHidden(id);
+    if (action === 'note') window.editNote(id);
+  });
+}
+
 async function geocodeProperty(p) {
   const params = new URLSearchParams();
   if (p.link) params.set('link', p.link);
@@ -357,13 +375,13 @@ function buildRow(p) {
   if (isChuko) tr.classList.add('row-chuko'); else tr.classList.add('row-new');
   if (isFav) tr.classList.add('row-fav');
   tr.innerHTML = `
-    <td class="col-pin"><button id="pin-${sid}" class="pin-btn${hasGeo ? '' : ' no-geo'}" title="地図で見る" onclick="window.focusMarker(${JSON.stringify(p.id)})">📍</button></td>
+    <td class="col-pin"><button id="pin-${sid}" class="pin-btn${hasGeo ? '' : ' no-geo'}" title="地図で見る" data-action="focus" data-id="${esc(p.id)}">📍</button></td>
     <td class="col-title"><div class="row-title"><span class="type-badge ${isChuko ? 'chuko' : 'new'}">${isChuko ? '中古' : '新築'}</span>${badge ? `<span class="new-badge ${badge === 'Recent' ? 'recent-badge' : ''}">${badge}</span>` : ''}<a href="${p.link}" target="_blank">${esc(p.title)}</a></div>${subParts.length ? `<div class="row-sub">${esc(subParts.join(' · '))}</div>` : ''}<div class="row-sub" id="addr-${sid}" ${addr ? '' : 'style="display:none"'} data-base="${esc(subParts.join(' · '))}">${addr ? esc(addr) : ''}</div>${note ? `<div class="row-sub">📝 ${esc(note)}</div>` : ''}</td>
     <td class="col-station">${p.station ? esc(p.station) + '駅' : '—'}</td>
     <td class="col-walk">${walk}</td>
     <td class="col-units">${p.totalUnits ? p.totalUnits + '戸' : (isChuko ? p.floorInfo ? `${p.floorInfo}階` : '—' : '—')}</td>
     <td class="col-date"><div>${dateStr}</div><div class="date-age">${dateAge}</div></td>
-    <td class="col-actions"><button class="btn-fav" onclick="window.toggleFavorite(${JSON.stringify(p.id)})">${isFav ? '❤️' : '🤍'}</button> <button class="btn-fav" title="隠す" onclick="window.toggleHidden(${JSON.stringify(p.id)})">🙈</button> <button class="btn-fav" title="メモ" onclick="window.editNote(${JSON.stringify(p.id)})">📝</button> <a class="btn-detail" href="${p.link}" target="_blank">詳細 ↗</a></td>`;
+    <td class="col-actions"><button class="btn-fav" data-action="favorite" data-id="${esc(p.id)}">${isFav ? '❤️' : '🤍'}</button> <button class="btn-fav" title="隠す" data-action="hidden" data-id="${esc(p.id)}">🙈</button> <button class="btn-fav" title="メモ" data-action="note" data-id="${esc(p.id)}">📝</button> <a class="btn-detail" href="${p.link}" target="_blank">詳細 ↗</a></td>`;
   return tr;
 }
 
@@ -445,6 +463,7 @@ async function loadProperties() {
 }
 
 window.initMap = function() {
+  bindPropertyGridActions();
   state.gmap = new google.maps.Map(document.getElementById('map'), { center:{ lat:35.6762, lng:139.6503 }, zoom:11, mapTypeControl:false, streetViewControl:false, fullscreenControl:true, zoomControlOptions:{ position:google.maps.ControlPosition.RIGHT_CENTER } });
   state.infoWindow = new google.maps.InfoWindow({ maxWidth:300 });
   loadProperties();
