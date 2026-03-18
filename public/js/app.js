@@ -66,10 +66,11 @@ function getListingDateMs(p) {
   return toMs(p.listingDate || p.pubDate || p.firstSeenAt || p.createdAt);
 }
 function isTokyoLink(link) {
-  return typeof link === 'string' && /\/tokyo\//.test(link);
+  return typeof link === 'string' && /suumo\.jp\//.test(link);
 }
 function isTokyoPrefecture(value) {
-  return extractPrefecture(value || '') === '東京都';
+  if (!value) return false;
+  return value === '東京都' || extractPrefecture(value) === '東京都';
 }
 function pruneNonTokyoState(removedIds) {
   if (!removedIds.length) return;
@@ -119,7 +120,7 @@ async function loadChukoData() {
   const data = await fetchJson(CHUKO_DATA_URL);
   state.chukoUpdatedAt = data.updatedAt || '—';
   state.chukoData = (data.properties || [])
-    .filter(p => isTokyoPrefecture(p.address || p.district || '東京都'))
+    .filter(p => isTokyoPrefecture(p.address) || Boolean(p.district))
     .map((p, i) => ({
       ...p,
       id: `chuko-${i}`,
