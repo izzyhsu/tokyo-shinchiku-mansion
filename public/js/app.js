@@ -22,6 +22,7 @@ const state = {
   selectedPrefectures: new Set(),
   selectedTypes: new Set(),
   markerMap: {},
+  failedGeocodes: new Set(),
   bounds: null,
   gmap: null,
   infoWindow: null,
@@ -257,6 +258,7 @@ async function geocodeAll(properties) {
           nonTokyoIds.add(p.id);
           continue;
         }
+        state.failedGeocodes.delete(p.id);
         addMarker(p, geo);
         done++;
         statusEl.textContent = `📍 位置取得中 ${done} / ${properties.length}`;
@@ -268,6 +270,8 @@ async function geocodeAll(properties) {
         }
         const pinBtn = document.getElementById(`pin-${safeId(p.id)}`);
         if (pinBtn) pinBtn.classList.remove('no-geo');
+      } else {
+        state.failedGeocodes.add(p.id);
       }
     }
   };
@@ -427,10 +431,15 @@ function renderProperties() {
   } else emptyEl.style.display = 'none';
   const newCnt = state.allProperties.filter(p => p.type !== 'chuko').length;
   const chukoCnt = state.chukoData.length;
+  const geocodedCount = Object.keys(state.markerMap).length;
+  const ungeocodedCount = visible.filter(p => !state.markerMap[p.id]).length;
   document.getElementById('header-count').textContent = `${newCnt + chukoCnt} 件`;
+  const coverageEl = document.getElementById('map-coverage');
+  if (coverageEl) coverageEl.textContent = `地図 ${geocodedCount} / ${state.allProperties.length} · 未定位 ${ungeocodedCount}`;
   document.getElementById('status-text').innerHTML = `<strong>${newCnt}</strong> 件新築 · <strong>${chukoCnt}</strong> 件中古 · Inbox <strong>${statusCounts.Inbox}</strong> · Reviewing <strong>${statusCounts.Reviewing}</strong> · Shortlist <strong>${statusCounts.Shortlist}</strong> · Follow-up <strong>${statusCounts['Follow-up']}</strong> · Rejected <strong>${statusCounts.Rejected}</strong> · <strong>${state.hidden.size}</strong> 件非表示` + (state.favorites.size ? ` <span style="color:#f59e0b">/ ❤️ ${state.favorites.size}</span>` : '');
   const groups = new Map();
   visible.forEach(p => { const pref = state.prefectureMap.get(p.id) || '不明'; if (!groups.has(pref)) groups.set(pref, []); groups.get(pref).push(p); });
+  const ungeocodedItems = visible.filter(p => !state.markerMap[p.id]);
   const prefKeys = sortedPrefectures(groups);
   const onlyUnknown = prefKeys.length === 1 && prefKeys[0] === '不明';
   prefKeys.forEach(pref => {
@@ -450,6 +459,20 @@ function renderProperties() {
     thead.appendChild(headerRow); table.appendChild(thead);
     const tbody = document.createElement('tbody'); props.forEach(p => tbody.appendChild(buildRow(p))); table.appendChild(tbody); wrapper.appendChild(table); section.appendChild(wrapper); container.appendChild(section);
   });
+  if (ungeocodedItems.length > 0) {
+    const section = document.createElement('div');
+    section.className = 'pref-section';
+    const hdr = document.createElement('div');
+    hdr.className = 'pref-header ungeocoded-header';
+    hdr.innerHTML = `<span class="pref-name">未定位</span><span class="pref-count">${ungeocodedItems.length}件</span>`;
+    section.appendChild(hdr);
+    const wrapper = document.createElement('div'); wrapper.className = 'table-wrapper';
+    const table = document.createElement('table'); table.className = 'property-table';
+    const thead = document.createElement('thead'); const headerRow = document.createElement('tr');
+    headerRow.appendChild(document.createElement('th')); headerRow.appendChild(thSort('title','物件名')); headerRow.appendChild(thSort('station','最寄駅')); headerRow.appendChild(thSort('walk','徒歩','th-walk')); headerRow.appendChild(thSort('units','階数 / 戸数','th-units')); headerRow.appendChild(thSort('date','登録日','th-date')); headerRow.appendChild(document.createElement('th'));
+    thead.appendChild(headerRow); table.appendChild(thead);
+    const tbody = document.createElement('tbody'); sortProps(ungeocodedItems).forEach(p => tbody.appendChild(buildRow(p))); table.appendChild(tbody); wrapper.appendChild(table); section.appendChild(wrapper); container.appendChild(section);
+  }
   syncMarkerVisibility();
 }
 
@@ -461,7 +484,7 @@ window.toggleFavorite = function(id) {
 };
 window.toggleHidden = function(id) { if (state.hidden.has(id)) state.hidden.delete(id); else state.hidden.add(id); persistSet(LS_KEYS.hidden, state.hidden); renderProperties(); };
 window.editNote = function(id) { const next = prompt('この物件のメモ', state.notes[id] || ''); if (next === null) return; if (next.trim()) state.notes[id] = next.trim(); else delete state.notes[id]; persistNotes(); renderProperties(); };
-window.refreshProperties = function() { Object.values(state.markerMap).forEach(({ marker }) => marker.setMap(null)); Object.keys(state.markerMap).forEach(k => delete state.markerMap[k]); state.prefectureMap.clear(); state.selectedPrefectures.clear(); state.bounds = null; loadProperties(); };
+window.refreshProperties = function() { Object.values(state.markerMap).forEach(({ marker }) => marker.setMap(null)); Object.keys(state.markerMap).forEach(k => delete state.markerMap[k]); state.failedGeocodes.clear(); state.prefectureMap.clear(); state.selectedPrefectures.clear(); state.bounds = null; loadProperties(); };
 
 async function loadProperties() {
   document.getElementById('loading-state').style.display = 'block';
