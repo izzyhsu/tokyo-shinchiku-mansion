@@ -160,6 +160,28 @@ async function googlePlacesSearch(query) {
   return null;
 }
 
+function decodeBrokenText(value) {
+  const input = normalizeText(value, 200);
+  if (!input) return '';
+  return input.replace(/�/g, '').trim();
+}
+
+function buildPlacesQueries({ title, station, line }) {
+  const cleanTitle = decodeBrokenText(title);
+  const cleanStation = decodeBrokenText(station);
+  const cleanLine = decodeBrokenText(line);
+  const stationLabel = cleanStation ? `${cleanStation}駅` : '';
+  return [
+    cleanTitle,
+    [cleanTitle, stationLabel].filter(Boolean).join(' '),
+    [cleanTitle, stationLabel, '東京都'].filter(Boolean).join(' '),
+    [cleanTitle, cleanLine, stationLabel].filter(Boolean).join(' '),
+    [cleanTitle, cleanLine, stationLabel, '東京都'].filter(Boolean).join(' '),
+    [stationLabel, '東京都'].filter(Boolean).join(' '),
+    [cleanLine, stationLabel, '東京都'].filter(Boolean).join(' '),
+  ].filter(Boolean).filter((value, index, arr) => arr.indexOf(value) === index);
+}
+
 async function scrapePropertyAddress(url) {
   if (!isAllowedSuumoUrl(url)) return null;
   try {
@@ -235,14 +257,22 @@ app.get('/api/geocode', enforceRateLimit, async (req, res) => {
     }
 
     if (!result && title) {
-      const geo = await googlePlacesSearch(title)
-        || await googlePlacesSearch(`${title} ${station ? `${station}駅` : ''}`.trim());
-      if (geo) result = { ...geo, source: 'places' };
+      for (const query of buildPlacesQueries({ title, station, line })) {
+        const geo = await googlePlacesSearch(query);
+        if (geo) {
+          result = { ...geo, source: 'places', query };
+          break;
+        }
+      }
     }
 
     if (!result && station) {
-      const geo = await googleGeocode(`${station}駅`)
-        || (line ? await googleGeocode(`${line} ${station}駅`) : null);
+      const stationLabel = `${decodeBrokenText(station)}駅`;
+      const lineLabel = decodeBrokenText(line);
+      const geo = await googleGeocode(`${stationLabel} 東京都`)
+        || (lineLabel ? await googleGeocode(`${lineLabel} ${stationLabel} 東京都`) : null)
+        || await googleGeocode(stationLabel)
+        || (lineLabel ? await googleGeocode(`${lineLabel} ${stationLabel}`) : null);
       if (geo) result = { ...geo, source: 'station' };
     }
 
