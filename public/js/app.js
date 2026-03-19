@@ -4,6 +4,7 @@ const LS_KEYS = {
   hidden: 'suumo_hidden',
   notes: 'suumo_notes',
   listingMeta: 'suumo_listing_meta',
+  statuses: 'suumo_statuses',
 };
 
 const state = {
@@ -13,6 +14,7 @@ const state = {
   hidden: new Set(JSON.parse(localStorage.getItem(LS_KEYS.hidden) || '[]')),
   notes: JSON.parse(localStorage.getItem(LS_KEYS.notes) || '{}'),
   listingMeta: JSON.parse(localStorage.getItem(LS_KEYS.listingMeta) || '{}'),
+  statuses: JSON.parse(localStorage.getItem(LS_KEYS.statuses) || '{}'),
   showFavOnly: false,
   sortKey: 'date',
   sortDir: -1,
@@ -39,6 +41,7 @@ function resolveApiBase() {
 function persistSet(key, set) { localStorage.setItem(key, JSON.stringify([...set])); }
 function persistNotes() { localStorage.setItem(LS_KEYS.notes, JSON.stringify(state.notes)); }
 function persistListingMeta() { localStorage.setItem(LS_KEYS.listingMeta, JSON.stringify(state.listingMeta)); }
+function persistStatuses() { localStorage.setItem(LS_KEYS.statuses, JSON.stringify(state.statuses)); }
 function esc(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function safeId(id) { return id.replace(/[^a-zA-Z0-9_-]/g, '_'); }
 function extractPrefecture(address) { const m = (address || '').match(/東京都|大阪府|京都府|北海道|[\u4e00-\u9fff]{2,5}[県]/u); return m ? m[0] : null; }
@@ -62,8 +65,19 @@ function listingAgeLabel(value) {
   if (days === 1) return '1 天前';
   return `${days} 天前`;
 }
+const STATUS_OPTIONS = ['Inbox', 'Reviewing', 'Shortlist', 'Follow-up', 'Rejected'];
+const STATUS_LABELS = {
+  Inbox: 'Inbox',
+  Reviewing: 'Reviewing',
+  Shortlist: 'Shortlist',
+  'Follow-up': 'Follow-up',
+  Rejected: 'Rejected',
+};
 function getListingDateMs(p) {
   return toMs(p.listingDate || p.pubDate || p.firstSeenAt || p.createdAt);
+}
+function getStatus(id) {
+  return state.statuses[id] || 'Inbox';
 }
 function isTokyoLink(link) {
   return typeof link === 'string' && /suumo\.jp\//.test(link);
@@ -205,6 +219,16 @@ function bindPropertyGridActions() {
     if (action === 'favorite') window.toggleFavorite(id);
     if (action === 'hidden') window.toggleHidden(id);
     if (action === 'note') window.editNote(id);
+  });
+  grid.addEventListener('change', (event) => {
+    const select = event.target.closest('select[data-action="status"]');
+    if (!select) return;
+    const { id } = select.dataset;
+    const value = select.value;
+    if (!id || !STATUS_OPTIONS.includes(value)) return;
+    state.statuses[id] = value;
+    persistStatuses();
+    renderProperties();
   });
 }
 
@@ -353,6 +377,7 @@ function buildRow(p) {
   const isChuko = p.type === 'chuko';
   const isFav = state.favorites.has(p.id);
   const sid = safeId(p.id);
+  const status = getStatus(p.id);
   const hasGeo = !!state.markerMap[p.id];
   const walk = p.walkMin ? `徒歩${p.walkMin}分` : (p.busMin ? `バス${p.busMin}分` : '—');
   const dateValue = p.listingDate || p.pubDate || p.firstSeenAt;
@@ -370,6 +395,7 @@ function buildRow(p) {
   const geo = state.markerMap[p.id]?.geo;
   const addr = geo?.resolvedAddress || geo?.address || '';
   const note = state.notes[p.id] || '';
+  const statusOptions = STATUS_OPTIONS.map(option => `<option value="${option}" ${status === option ? 'selected' : ''}>${STATUS_LABELS[option]}</option>`).join('');
   const tr = document.createElement('tr');
   tr.id = sid;
   if (isChuko) tr.classList.add('row-chuko'); else tr.classList.add('row-new');
@@ -381,13 +407,15 @@ function buildRow(p) {
     <td class="col-walk">${walk}</td>
     <td class="col-units">${p.totalUnits ? p.totalUnits + '戸' : (isChuko ? p.floorInfo ? `${p.floorInfo}階` : '—' : '—')}</td>
     <td class="col-date"><div>${dateStr}</div><div class="date-age">${dateAge}</div></td>
-    <td class="col-actions"><button class="btn-fav" data-action="favorite" data-id="${esc(p.id)}">${isFav ? '❤️' : '🤍'}</button> <button class="btn-fav" title="隠す" data-action="hidden" data-id="${esc(p.id)}">🙈</button> <button class="btn-fav" title="メモ" data-action="note" data-id="${esc(p.id)}">📝</button> <a class="btn-detail" href="${p.link}" target="_blank">詳細 ↗</a></td>`;
+    <td class="col-actions"><div class="status-select-wrap"><select class="status-select" data-action="status" data-id="${esc(p.id)}">${statusOptions}</select></div><button class="btn-fav" data-action="favorite" data-id="${esc(p.id)}">${isFav ? '❤️' : '🤍'}</button> <button class="btn-fav" title="隠す" data-action="hidden" data-id="${esc(p.id)}">🙈</button> <button class="btn-fav" title="メモ" data-action="note" data-id="${esc(p.id)}">📝</button> <a class="btn-detail" href="${p.link}" target="_blank">詳細 ↗</a></td>`;
   return tr;
 }
 
 function renderProperties() {
   const container = document.getElementById('property-grid');
   let visible = [...state.allProperties].filter(p => !state.hidden.has(p.id));
+  const statusCounts = STATUS_OPTIONS.reduce((acc, status) => ({ ...acc, [status]: 0 }), {});
+  state.allProperties.forEach(p => { statusCounts[getStatus(p.id)] += 1; });
   if (state.showFavOnly) visible = visible.filter(p => state.favorites.has(p.id));
   if (state.selectedTypes.size > 0) visible = visible.filter(p => state.selectedTypes.has(p.type || 'new'));
   if (state.selectedPrefectures.size > 0) visible = visible.filter(p => state.selectedPrefectures.has(state.prefectureMap.get(p.id)));
@@ -400,7 +428,7 @@ function renderProperties() {
   const newCnt = state.allProperties.filter(p => p.type !== 'chuko').length;
   const chukoCnt = state.chukoData.length;
   document.getElementById('header-count').textContent = `${newCnt + chukoCnt} 件`;
-  document.getElementById('status-text').innerHTML = `<strong>${newCnt}</strong> 件新築 · <strong>${chukoCnt}</strong> 件中古 · <strong>${state.hidden.size}</strong> 件非表示` + (state.favorites.size ? ` <span style="color:#f59e0b">/ ❤️ ${state.favorites.size}</span>` : '');
+  document.getElementById('status-text').innerHTML = `<strong>${newCnt}</strong> 件新築 · <strong>${chukoCnt}</strong> 件中古 · Inbox <strong>${statusCounts.Inbox}</strong> · Reviewing <strong>${statusCounts.Reviewing}</strong> · Shortlist <strong>${statusCounts.Shortlist}</strong> · Follow-up <strong>${statusCounts['Follow-up']}</strong> · Rejected <strong>${statusCounts.Rejected}</strong> · <strong>${state.hidden.size}</strong> 件非表示` + (state.favorites.size ? ` <span style="color:#f59e0b">/ ❤️ ${state.favorites.size}</span>` : '');
   const groups = new Map();
   visible.forEach(p => { const pref = state.prefectureMap.get(p.id) || '不明'; if (!groups.has(pref)) groups.set(pref, []); groups.get(pref).push(p); });
   const prefKeys = sortedPrefectures(groups);

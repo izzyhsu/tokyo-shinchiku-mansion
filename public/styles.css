@@ -64,7 +64,11 @@ main { max-width:1200px; margin:0 auto; padding:20px 20px 60px; }
 .col-walk { white-space:nowrap; min-width:70px; color:var(--grey); }
 .col-units { white-space:nowrap; text-align:right; color:var(--grey); }
 .col-date { white-space:nowrap; color:#9ca3af; font-size:12px; }
-.col-actions { white-space:nowrap; text-align:right; min-width:100px; }
+.col-actions { white-space:nowrap; text-align:right; min-width:180px; }
+.status-select-wrap { display:inline-block; margin-right:6px; vertical-align:middle; }
+.status-select { border:1px solid var(--border); background:#fff; color:#374151; border-radius:6px; padding:4px 8px; font-size:11px; max-width:110px; }
+.status-select:focus { outline:none; border-color:var(--red); }
+.btn-fav, .btn-detail, .status-select { vertical-align:middle; }
 .row-title { font-weight:600; font-size:13px; color:#111; line-height:1.4; }
 .row-title a { color:inherit; text-decoration:none; }
 .row-title a:hover { color:var(--red); }
