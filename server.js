@@ -125,39 +125,47 @@ const rssClient = axios.create({ timeout: 15000, headers: {
 } });
 
 async function googleGeocode(address) {
-  if (!GOOGLE_MAPS_SERVER_KEY) return null;
+  if (!GOOGLE_MAPS_SERVER_KEY) return { ok: false, reason: 'missing-server-key', query: address };
   try {
     const res = await googleClient.get('https://maps.googleapis.com/maps/api/geocode/json', {
       params: { address, key: GOOGLE_MAPS_SERVER_KEY, region: 'jp', language: 'ja' },
     });
     const hit = res.data?.results?.[0];
     if (hit) return {
+      ok: true,
       lat: hit.geometry.location.lat,
       lng: hit.geometry.location.lng,
       address: hit.formatted_address,
+      query: address,
+      apiStatus: res.data?.status || 'OK',
     };
+    return { ok: false, reason: 'geocode-no-result', query: address, apiStatus: res.data?.status || 'ZERO_RESULTS' };
   } catch (err) {
     console.warn('Geocode API error:', err.message);
+    return { ok: false, reason: 'geocode-error', query: address, error: err.message };
   }
-  return null;
 }
 
 async function googlePlacesSearch(query) {
-  if (!GOOGLE_MAPS_SERVER_KEY) return null;
+  if (!GOOGLE_MAPS_SERVER_KEY) return { ok: false, reason: 'missing-server-key', query };
   try {
     const res = await googleClient.get('https://maps.googleapis.com/maps/api/place/textsearch/json', {
       params: { query, key: GOOGLE_MAPS_SERVER_KEY, language: 'ja', region: 'jp' },
     });
     const hit = res.data?.results?.[0];
     if (hit) return {
+      ok: true,
       lat: hit.geometry.location.lat,
       lng: hit.geometry.location.lng,
       address: hit.formatted_address || hit.vicinity || hit.name,
+      query,
+      apiStatus: res.data?.status || 'OK',
     };
+    return { ok: false, reason: 'places-no-result', query, apiStatus: res.data?.status || 'ZERO_RESULTS' };
   } catch (err) {
     console.warn('Places API error:', err.message);
+    return { ok: false, reason: 'places-error', query, error: err.message };
   }
-  return null;
 }
 
 function decodeBrokenText(value) {
@@ -247,20 +255,25 @@ app.get('/api/geocode', enforceRateLimit, async (req, res) => {
 
   const job = (async () => {
     let result = null;
+    const debug = { attempts: [] };
 
     if (link) {
       const address = await scrapePropertyAddress(link);
       if (address) {
         const geo = await googleGeocode(address);
-        if (geo) result = { ...geo, resolvedAddress: address, source: 'address' };
+        debug.attempts.push({ step: 'address', ...geo, resolvedAddress: address });
+        if (geo.ok) result = { ...geo, resolvedAddress: address, source: 'address', debug };
+      } else {
+        debug.attempts.push({ step: 'address', ok: false, reason: 'address-scrape-failed', query: link });
       }
     }
 
     if (!result && title) {
       for (const query of buildPlacesQueries({ title, station, line })) {
         const geo = await googlePlacesSearch(query);
-        if (geo) {
-          result = { ...geo, source: 'places', query };
+        debug.attempts.push({ step: 'places', ...geo });
+        if (geo.ok) {
+          result = { ...geo, source: 'places', query, debug };
           break;
         }
       }
@@ -269,11 +282,24 @@ app.get('/api/geocode', enforceRateLimit, async (req, res) => {
     if (!result && station) {
       const stationLabel = `${decodeBrokenText(station)}駅`;
       const lineLabel = decodeBrokenText(line);
-      const geo = await googleGeocode(`${stationLabel} 東京都`)
-        || (lineLabel ? await googleGeocode(`${lineLabel} ${stationLabel} 東京都`) : null)
-        || await googleGeocode(stationLabel)
-        || (lineLabel ? await googleGeocode(`${lineLabel} ${stationLabel}`) : null);
-      if (geo) result = { ...geo, source: 'station' };
+      const stationQueries = [
+        `${stationLabel} 東京都`,
+        lineLabel ? `${lineLabel} ${stationLabel} 東京都` : '',
+        stationLabel,
+        lineLabel ? `${lineLabel} ${stationLabel}` : '',
+      ].filter(Boolean);
+      for (const query of stationQueries) {
+        const geo = await googleGeocode(query);
+        debug.attempts.push({ step: 'station', ...geo });
+        if (geo.ok) {
+          result = { ...geo, source: 'station', debug };
+          break;
+        }
+      }
+    }
+
+    if (!result) {
+      result = { ok: false, source: 'failed', debug, reason: debug.attempts.at(-1)?.reason || 'no-match' };
     }
 
     geocache[cacheKey] = result;

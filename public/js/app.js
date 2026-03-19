@@ -22,7 +22,7 @@ const state = {
   selectedPrefectures: new Set(),
   selectedTypes: new Set(),
   markerMap: {},
-  failedGeocodes: new Set(),
+  failedGeocodes: new Map(),
   bounds: null,
   gmap: null,
   infoWindow: null,
@@ -271,7 +271,7 @@ async function geocodeAll(properties) {
         const pinBtn = document.getElementById(`pin-${safeId(p.id)}`);
         if (pinBtn) pinBtn.classList.remove('no-geo');
       } else {
-        state.failedGeocodes.add(p.id);
+        state.failedGeocodes.set(p.id, geo?.debug || { attempts: [{ reason: geo?.reason || 'unknown' }] });
       }
     }
   };
@@ -399,6 +399,9 @@ function buildRow(p) {
   const geo = state.markerMap[p.id]?.geo;
   const addr = geo?.resolvedAddress || geo?.address || '';
   const note = state.notes[p.id] || '';
+  const geocodeDebug = state.failedGeocodes.get(p.id);
+  const failureReason = geocodeDebug?.attempts?.at(-1)?.reason || '';
+  const failureQuery = geocodeDebug?.attempts?.at(-1)?.query || '';
   const statusOptions = STATUS_OPTIONS.map(option => `<option value="${option}" ${status === option ? 'selected' : ''}>${STATUS_LABELS[option]}</option>`).join('');
   const tr = document.createElement('tr');
   tr.id = sid;
@@ -406,7 +409,7 @@ function buildRow(p) {
   if (isFav) tr.classList.add('row-fav');
   tr.innerHTML = `
     <td class="col-pin"><button id="pin-${sid}" class="pin-btn${hasGeo ? '' : ' no-geo'}" title="地図で見る" data-action="focus" data-id="${esc(p.id)}">📍</button></td>
-    <td class="col-title"><div class="row-title"><span class="type-badge ${isChuko ? 'chuko' : 'new'}">${isChuko ? '中古' : '新築'}</span>${badge ? `<span class="new-badge ${badge === 'Recent' ? 'recent-badge' : ''}">${badge}</span>` : ''}<a href="${p.link}" target="_blank">${esc(p.title)}</a></div>${subParts.length ? `<div class="row-sub">${esc(subParts.join(' · '))}</div>` : ''}<div class="row-sub" id="addr-${sid}" ${addr ? '' : 'style="display:none"'} data-base="${esc(subParts.join(' · '))}">${addr ? esc(addr) : ''}</div>${note ? `<div class="row-sub">📝 ${esc(note)}</div>` : ''}</td>
+    <td class="col-title"><div class="row-title"><span class="type-badge ${isChuko ? 'chuko' : 'new'}">${isChuko ? '中古' : '新築'}</span>${badge ? `<span class="new-badge ${badge === 'Recent' ? 'recent-badge' : ''}">${badge}</span>` : ''}<a href="${p.link}" target="_blank">${esc(p.title)}</a></div>${subParts.length ? `<div class="row-sub">${esc(subParts.join(' · '))}</div>` : ''}<div class="row-sub" id="addr-${sid}" ${addr ? '' : 'style="display:none"'} data-base="${esc(subParts.join(' · '))}">${addr ? esc(addr) : ''}</div>${note ? `<div class="row-sub">📝 ${esc(note)}</div>` : ''}${!hasGeo && failureReason ? `<div class="row-sub">⚠️ ${esc(failureReason)}${failureQuery ? ` · ${esc(failureQuery)}` : ''}</div>` : ''}</td>
     <td class="col-station">${p.station ? esc(p.station) + '駅' : '—'}</td>
     <td class="col-walk">${walk}</td>
     <td class="col-units">${p.totalUnits ? p.totalUnits + '戸' : (isChuko ? p.floorInfo ? `${p.floorInfo}階` : '—' : '—')}</td>
